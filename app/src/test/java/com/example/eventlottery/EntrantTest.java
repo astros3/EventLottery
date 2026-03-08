@@ -10,4 +10,5 @@ public class EntrantTest {
         assertEquals("Donald Trump", entrant.getFullName());
         assertEquals("123", entrant.getPhoneNumber());
     }
+
 }

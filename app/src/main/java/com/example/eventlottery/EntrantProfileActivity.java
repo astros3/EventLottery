@@ -1,6 +1,7 @@
 package com.example.eventlottery;
 
 import android.os.Bundle;
+import android.provider.Settings;
 import android.util.Log;
 import android.widget.Button;
 import android.widget.EditText;
@@ -18,56 +19,63 @@ import com.google.firebase.firestore.FirebaseFirestore;
 public class EntrantProfileActivity extends AppCompatActivity {
 
     private EditText firstNameInput, lastNameInput, emailInput, phoneInput;
-    private Button enterButton;
     private FirebaseFirestore db;
+    private String deviceId; // Unique key for this user
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_entrant_profile);
 
-        // Initialize Firestore
         db = FirebaseFirestore.getInstance();
+        // Get a unique ID for this hardware
+        deviceId = Settings.Secure.getString(getContentResolver(), Settings.Secure.ANDROID_ID);
 
-        // View Binding
+        // UI Initialization...
         firstNameInput = findViewById(R.id.edit_first_name);
         lastNameInput = findViewById(R.id.edit_last_name);
         emailInput = findViewById(R.id.edit_email);
         phoneInput = findViewById(R.id.edit_phone);
-        enterButton = findViewById(R.id.btn_enter);
 
-        enterButton.setOnClickListener(v -> saveToFirebase());
+        // 1. Load existing data
+        loadProfile();
+
+        findViewById(R.id.btn_enter).setOnClickListener(v -> updateProfile());
     }
 
     /**
-     * Captures UI input and pushes a new Entrant document to the "users" collection.
-     * Maps to requirement: "Distinguish between entrants, organizers, and admin".
+     * Fetches current profile data from Firestore and populates the UI.
      */
-    private void saveToFirebase() {
-        String fName = firstNameInput.getText().toString().trim();
-        String lName = lastNameInput.getText().toString().trim();
-        String email = emailInput.getText().toString().trim();
-        String phone = phoneInput.getText().toString().trim();
-
-        if (fName.isEmpty() || email.isEmpty()) {
-            Toast.makeText(this, "Name and Email are required!", Toast.LENGTH_SHORT).show();
-            return;
-        }
-
-        // Create the model
-        Entrant entrant = new Entrant(fName, lName, email, phone);
-
-        // Save to Firestore under a "users" collection
-        // In a real app, use the Firebase Auth UID instead of a random ID
-        db.collection("users")
-                .add(entrant)
-                .addOnSuccessListener(documentReference -> {
-                    Toast.makeText(EntrantProfileActivity.this, "Profile Saved!", Toast.LENGTH_SHORT).show();
-                    // Navigate to next screen (e.g., QR Scanner.)
-                })
-                .addOnFailureListener(e -> {
-                    Log.e("FirebaseError", "Error adding document", e);
-                    Toast.makeText(EntrantProfileActivity.this, "Save Failed", Toast.LENGTH_SHORT).show();
+    private void loadProfile() {
+        db.collection("users").document(deviceId).get()
+                .addOnSuccessListener(documentSnapshot -> {
+                    if (documentSnapshot.exists()) {
+                        Entrant existing = documentSnapshot.toObject(Entrant.class);
+                        if (existing != null) {
+                            firstNameInput.setText(existing.getFirstName());
+                            lastNameInput.setText(existing.getLastName());
+                            emailInput.setText(existing.getEmail());
+                            phoneInput.setText(existing.getPhoneNumber());
+                        }
+                    }
                 });
+    }
+
+    /**
+     * Saves or Updates the profile using the unique Device ID.
+     */
+    private void updateProfile() {
+        Entrant entrant = new Entrant(
+                firstNameInput.getText().toString(),
+                lastNameInput.getText().toString(),
+                emailInput.getText().toString(),
+                phoneInput.getText().toString()
+        );
+
+        // .set() with the deviceId will overwrite the old data (Update)
+        db.collection("users").document(deviceId)
+                .set(entrant)
+                .addOnSuccessListener(aVoid -> Toast.makeText(this, "Profile Updated!", Toast.LENGTH_SHORT).show())
+                .addOnFailureListener(e -> Toast.makeText(this, "Update Failed", Toast.LENGTH_SHORT).show());
     }
 }
