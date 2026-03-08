@@ -3,6 +3,7 @@ package com.example.eventlottery;
 import static androidx.test.espresso.Espresso.onView;
 import static androidx.test.espresso.action.ViewActions.click;
 import static androidx.test.espresso.action.ViewActions.closeSoftKeyboard;
+import static androidx.test.espresso.action.ViewActions.replaceText;
 import static androidx.test.espresso.action.ViewActions.typeText;
 import static androidx.test.espresso.assertion.ViewAssertions.matches;
 import static androidx.test.espresso.matcher.ViewMatchers.withId;
@@ -65,5 +66,19 @@ public class EntrantProfileIntentTest {
         // Verification: Check if the fields are correctly populated before submission
         onView(withId(R.id.edit_first_name)).check(matches(withText("Donald")));
         onView(withId(R.id.edit_email)).check(matches(withText("donald@gmail.com")));
+    }
+
+    @Test
+    public void testUpdateProfile() {
+        // 1. Initial Save
+        onView(withId(R.id.edit_first_name)).perform(replaceText("Original Name"), closeSoftKeyboard());
+        onView(withId(R.id.btn_enter)).perform(click());
+
+        // 2. Change the name (Update)
+        onView(withId(R.id.edit_first_name)).perform(replaceText("Updated Name"), closeSoftKeyboard());
+        onView(withId(R.id.btn_enter)).perform(click());
+
+        // 3. Verify the field holds the new value
+        onView(withId(R.id.edit_first_name)).check(matches(withText("Updated Name")));
     }
 }
