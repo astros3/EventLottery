@@ -1,6 +1,7 @@
 package com.example.eventlottery;
 
 import android.graphics.PorterDuff;
+import android.graphics.drawable.Drawable;
 import android.os.Bundle;
 import android.view.View;
 import android.widget.TextView;
@@ -79,8 +80,11 @@ public class EventDetailsActivity extends AppCompatActivity {
 
         toolbar.setBackgroundColor(toolbarBg);
         toolbar.setTitleTextColor(toolbarContent);
-        if (toolbar.getNavigationIcon() != null) {
-            toolbar.getNavigationIcon().setColorFilter(toolbarContent, PorterDuff.Mode.SRC_IN);
+        Drawable navIcon = ContextCompat.getDrawable(this, R.drawable.ic_back_arrow);
+        if (navIcon != null) {
+            navIcon = navIcon.mutate();
+            navIcon.setColorFilter(toolbarContent, PorterDuff.Mode.SRC_IN);
+            toolbar.setNavigationIcon(navIcon);
         }
     }
 
