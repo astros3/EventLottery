@@ -28,8 +28,8 @@ public class Event {
     private double price;
     private List<String> selectionCriteria;
 
-    public Event() {
-        selectionCriteria = new ArrayList<>();
+    public Event(){
+        this.selectionCriteria = new ArrayList<>();
     }
 
     public Event(String eventId, String title, String description, String location,

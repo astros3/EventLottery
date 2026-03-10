@@ -9,11 +9,12 @@ public class Entrant {
     private String firstName;
     private String lastName;
     private String email;
-    private String phoneNumber; // Optional
+    private String phoneNumber;
 
-    /**
-     * Default constructor required for Firebase integration.
-     */
+    private Double latitude;
+    private Double longitude;
+    private String locationAddress;
+
     public Entrant() {}
 
     public Entrant(String firstName, String lastName, String email, String phoneNumber) {
@@ -23,7 +24,9 @@ public class Entrant {
         this.phoneNumber = phoneNumber;
     }
 
-    public String getFullName() { return firstName + " " + lastName; }
+    public String getFullName() {
+        return firstName + " " + lastName;
+    }
 
     public String getFirstName() { return firstName; }
     public void setFirstName(String firstName) { this.firstName = firstName; }
@@ -36,4 +39,13 @@ public class Entrant {
 
     public String getPhoneNumber() { return phoneNumber; }
     public void setPhoneNumber(String phoneNumber) { this.phoneNumber = phoneNumber; }
+
+    public Double getLatitude() { return latitude; }
+    public void setLatitude(Double latitude) { this.latitude = latitude; }
+
+    public Double getLongitude() { return longitude; }
+    public void setLongitude(Double longitude) { this.longitude = longitude; }
+
+    public String getLocationAddress() { return locationAddress; }
+    public void setLocationAddress(String locationAddress) { this.locationAddress = locationAddress; }
 }

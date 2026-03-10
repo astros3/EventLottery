@@ -45,6 +45,10 @@ dependencies {
     implementation(libs.fragment)
     implementation(libs.navigation.fragment.ktx)
     implementation(libs.navigation.ui.ktx)
+
+    implementation("com.google.android.gms:play-services-location:21.0.1")
+    implementation("com.google.android.gms:play-services-maps:20.0.0")
+
     implementation(libs.firebase.firestore)
     testImplementation(libs.junit)
     testImplementation(libs.espresso.core)
@@ -54,8 +58,11 @@ dependencies {
     implementation("com.google.firebase:firebase-analytics")
     implementation("com.google.firebase:firebase-firestore")
 
-    //This library gives us a ready-made QR scanner using the phone camera, so we don't have to implement QR detection ourselves.
     implementation("com.journeyapps:zxing-android-embedded:4.3.0")
     // ZXing core for QR code generation (US 02.01.01)
     implementation("com.google.zxing:core:3.5.2")
+
+    testImplementation(libs.junit)
+    androidTestImplementation(libs.ext.junit)
+    androidTestImplementation(libs.espresso.core)
 }
