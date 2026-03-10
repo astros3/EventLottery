@@ -44,6 +44,7 @@ dependencies {
     implementation(libs.fragment)
     implementation(libs.navigation.fragment.ktx)
     implementation(libs.navigation.ui.ktx)
+    implementation(libs.firebase.firestore)
     testImplementation(libs.junit)
     testImplementation(libs.espresso.core)
     androidTestImplementation(libs.ext.junit)

@@ -6,7 +6,7 @@
 
     <fragment
         android:id="@+id/OrganizerNavigationFragment"
-        android:name="com.example.projectpart_3.OrganizerNavigationFragment"
+        android:name="com.example.eventlottery.OrganizerNavigationFragment"
         android:label="Organizer Navigation">
 
         <action
@@ -22,7 +22,7 @@
 
     <fragment
         android:id="@+id/LotteryDraw"
-        android:name="com.example.projectpart_3.LotteryDraw"
+        android:name="com.example.eventlottery.LotteryDraw"
         android:label="Lottery Draw">
 
         <action
@@ -31,7 +31,7 @@
     </fragment>
     <fragment
         android:id="@+id/Waiting_list"
-        android:name="com.example.projectpart_3.Waiting_list"
+        android:name="com.example.eventlottery.Waiting_list"
         android:label="Waiting List">
         <action
             android:id="@+id/Waiting_list_to_OrganizerNavigationFragment"
@@ -39,7 +39,7 @@
     </fragment>
     <fragment
         android:id="@+id/Selected_list"
-        android:name="com.example.projectpart_3.Selected_list"
+        android:name="com.example.eventlottery.Selected_list"
         android:label="Selected list">
         <action
             android:id="@+id/Selected_list_to_OrganizerNavigationFragment"
