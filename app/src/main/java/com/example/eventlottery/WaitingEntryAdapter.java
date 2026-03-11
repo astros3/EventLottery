@@ -30,35 +30,38 @@ public class WaitingEntryAdapter extends ArrayAdapter<WaitingListEntry> {
     @NonNull
     @Override
     public View getView(int position, @Nullable View convertView, @NonNull ViewGroup parent) {
+
         View view = convertView;
 
         if (view == null) {
-            view = LayoutInflater.from(activity).inflate(R.layout.item_waiting_entry, parent, false);
+            view = LayoutInflater.from(activity)
+                    .inflate(R.layout.item_waiting_entry, parent, false);
         }
 
         WaitingListEntry entry = entries.get(position);
-        Entrant entrant = entry.getEntrant();
 
         TextView textEntrantName = view.findViewById(R.id.textEntrantName);
         ImageView buttonLocation = view.findViewById(R.id.buttonLocation);
 
-        textEntrantName.setText(entrant.getFullName());
+        // Since WaitingListEntry only stores deviceId
+        String entrantName = entry.getDeviceId();
+        textEntrantName.setText(entrantName);
 
         buttonLocation.setOnClickListener(v -> {
-            Bundle bundle = new Bundle();
-            bundle.putString("entrant_name", entrant.getFullName());
-            bundle.putString("location_address", entrant.getLocationAddress());
 
-            if (entrant.getLatitude() != null) {
-                bundle.putDouble("latitude", entrant.getLatitude());
-            }
-            if (entrant.getLongitude() != null) {
-                bundle.putDouble("longitude", entrant.getLongitude());
-            }
+            Bundle bundle = new Bundle();
+            bundle.putString("entrant_name", entrantName);
+
+            // No location info exists in WaitingListEntry
+            bundle.putString("location_address", "");
 
             NavController navController =
                     Navigation.findNavController(activity, R.id.nav_host_fragment);
-            navController.navigate(R.id.Waiting_list_to_GeolocationFragment, bundle);
+
+            navController.navigate(
+                    R.id.Waiting_list_to_GeolocationFragment,
+                    bundle
+            );
         });
 
         return view;

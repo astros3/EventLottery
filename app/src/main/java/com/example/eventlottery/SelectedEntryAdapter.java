@@ -1,56 +1,58 @@
 package com.example.eventlottery;
 
+import android.app.Activity;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.ArrayAdapter;
-import android.widget.ImageView;
+import android.widget.Button;
 import android.widget.TextView;
 
 import androidx.annotation.NonNull;
-import androidx.annotation.Nullable;
-import androidx.fragment.app.FragmentActivity;
 
 import java.util.ArrayList;
+import android.widget.ImageView;
 
 public class SelectedEntryAdapter extends ArrayAdapter<WaitingListEntry> {
 
-    public interface OnDeleteClickListener {
-        void onDeleteClick(WaitingListEntry entry);
+    public interface CancelListener {
+        void onCancel(WaitingListEntry entry);
     }
 
-    private final FragmentActivity activity;
-    private final ArrayList<WaitingListEntry> entries;
-    private final OnDeleteClickListener listener;
+    private CancelListener cancelListener;
 
-    public SelectedEntryAdapter(FragmentActivity activity,
-                                ArrayList<Waiting_list> entries,
-                                OnDeleteClickListener listener) {
-        super(activity, 0, entries);
-        this.activity = activity;
-        this.entries = entries;
-        this.listener = listener;
+    public SelectedEntryAdapter(Activity context,
+                                ArrayList<WaitingListEntry> entries,
+                                CancelListener listener) {
+        super(context, 0, entries);
+        this.cancelListener = listener;
     }
 
     @NonNull
     @Override
-    public View getView(int position, @Nullable View convertView, @NonNull ViewGroup parent) {
-        View view = convertView;
+    public View getView(int position, View convertView, @NonNull ViewGroup parent) {
 
-        if (view == null) {
-            view = LayoutInflater.from(activity).inflate(R.layout.item_selected_entry, parent, false);
+        if (convertView == null) {
+            convertView = LayoutInflater.from(getContext())
+                    .inflate(R.layout.item_selected_entry, parent, false);
         }
 
-        Waiting_list entry = entries.get(position);
-        Entrant entrant = entry.getEntrant();
+        WaitingListEntry entry = getItem(position);
 
-        TextView textEntrantName = view.findViewById(R.id.textEntrantName);
-        ImageView buttonDelete = view.findViewById(R.id.buttonDelete);
+        TextView nameText = convertView.findViewById(R.id.textEntrantName);
+        ImageView cancelButton = convertView.findViewById(R.id.buttonDelete);
 
-        textEntrantName.setText(entrant.getFullName());
+        if (entry != null) {
 
-        buttonDelete.setOnClickListener(v -> listener.onDeleteClick(entry));
+            nameText.setText(entry.getDeviceId());
 
-        return view;
+            cancelButton.setOnClickListener(v -> {
+                if (cancelListener != null) {
+                    cancelListener.onCancel(entry);
+                }
+            });
+        }
+
+        return convertView;
     }
 }

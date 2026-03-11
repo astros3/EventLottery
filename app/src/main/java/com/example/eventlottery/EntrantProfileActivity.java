@@ -21,6 +21,7 @@ public class EntrantProfileActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_profile);
 
+
         db = FirebaseFirestore.getInstance();
         deviceId = DeviceIdManager.getDeviceId(this);
 
@@ -62,6 +63,7 @@ public class EntrantProfileActivity extends AppCompatActivity {
         String lastName = parts.length > 1 ? parts[1] : "";
 
         Entrant entrant = new Entrant(
+                deviceId,
                 firstName,
                 lastName,
                 emailInput.getText().toString().trim(),

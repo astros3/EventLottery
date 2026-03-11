@@ -8,6 +8,16 @@ package com.example.eventlottery;
  * both an entrant profile (users) and an organizer profile (organizers).
  */
 public class Organizer {
+
+    private boolean notificationsEnabled;
+
+    public boolean isNotificationsEnabled() {
+        return notificationsEnabled;
+    }
+
+    public void setNotificationsEnabled(boolean notificationsEnabled) {
+        this.notificationsEnabled = notificationsEnabled;
+    }
     private String organizerId;
     private String firstName;
     private String lastName;

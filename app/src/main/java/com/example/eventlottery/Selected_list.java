@@ -9,9 +9,6 @@ import androidx.annotation.Nullable;
 import androidx.fragment.app.Fragment;
 import androidx.navigation.fragment.NavHostFragment;
 
-import com.example.eventlottery.EntrantListManager;
-import com.example.eventlottery.R;
-
 import java.util.ArrayList;
 
 public class Selected_list extends Fragment {
@@ -35,7 +32,8 @@ public class Selected_list extends Fragment {
         selectedEntries = new ArrayList<>(event.getSelectedEntrants());
 
         adapter = new SelectedEntryAdapter(requireActivity(), selectedEntries, entry -> {
-            event.cancelEntrant(entry.getEntrant());
+
+            event.cancelEntrant(entry.getDeviceId());
 
             selectedEntries.clear();
             selectedEntries.addAll(event.getSelectedEntrants());
