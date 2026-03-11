@@ -1,15 +1,11 @@
 package com.example.eventlottery;
 
-/**
- * Represents an entrant (CRC: Entrant): a person entering/joining events.
- * Stored in Firestore at users/{deviceId}. Used for profile and for joining waiting lists.
- * Entrants and organizers are separate account types; only organizers create/edit events.
- */
 public class Entrant {
-    private String firstName;
-    private String lastName;
+    private String deviceID;
+    private String name;
     private String email;
-    private String phoneNumber;
+    private String phone;
+    private String role;
 
     private Double latitude;
     private Double longitude;
@@ -17,35 +13,80 @@ public class Entrant {
 
     public Entrant() {}
 
-    public Entrant(String firstName, String lastName, String email, String phoneNumber) {
-        this.firstName = firstName;
-        this.lastName = lastName;
+    public Entrant(String deviceID, String name, String email, String phone, String role) {
+        this.deviceID = deviceID;
+        this.name = name;
         this.email = email;
-        this.phoneNumber = phoneNumber;
+        this.phone = phone;
+        this.role = role;
     }
 
     public String getFullName() {
-        return firstName + " " + lastName;
+        String fullName = name != null ? name.trim() : "";
+        return fullName.isEmpty() ? "Unknown Entrant" : fullName;
     }
 
-    public String getFirstName() { return firstName; }
-    public void setFirstName(String firstName) { this.firstName = firstName; }
+    public String getDeviceID() {
+        return deviceID;
+    }
 
-    public String getLastName() { return lastName; }
-    public void setLastName(String lastName) { this.lastName = lastName; }
+    public void setDeviceID(String deviceID) {
+        this.deviceID = deviceID;
+    }
 
-    public String getEmail() { return email; }
-    public void setEmail(String email) { this.email = email; }
+    public String getName() {
+        return name;
+    }
 
-    public String getPhoneNumber() { return phoneNumber; }
-    public void setPhoneNumber(String phoneNumber) { this.phoneNumber = phoneNumber; }
+    public void setName(String name) {
+        this.name = name;
+    }
 
-    public Double getLatitude() { return latitude; }
-    public void setLatitude(Double latitude) { this.latitude = latitude; }
+    public String getEmail() {
+        return email;
+    }
 
-    public Double getLongitude() { return longitude; }
-    public void setLongitude(Double longitude) { this.longitude = longitude; }
+    public void setEmail(String email) {
+        this.email = email;
+    }
 
-    public String getLocationAddress() { return locationAddress; }
-    public void setLocationAddress(String locationAddress) { this.locationAddress = locationAddress; }
+    public String getPhone() {
+        return phone;
+    }
+
+    public void setPhone(String phone) {
+        this.phone = phone;
+    }
+
+    public String getRole() {
+        return role;
+    }
+
+    public void setRole(String role) {
+        this.role = role;
+    }
+
+    public Double getLatitude() {
+        return latitude;
+    }
+
+    public void setLatitude(Double latitude) {
+        this.latitude = latitude;
+    }
+
+    public Double getLongitude() {
+        return longitude;
+    }
+
+    public void setLongitude(Double longitude) {
+        this.longitude = longitude;
+    }
+
+    public String getLocationAddress() {
+        return locationAddress;
+    }
+
+    public void setLocationAddress(String locationAddress) {
+        this.locationAddress = locationAddress;
+    }
 }

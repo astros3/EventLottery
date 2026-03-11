@@ -3,6 +3,7 @@ package com.example.eventlottery;
 import android.graphics.PorterDuff;
 import android.graphics.drawable.Drawable;
 import android.os.Bundle;
+import android.util.Log;
 import android.view.View;
 import android.widget.TextView;
 import android.widget.Toast;
@@ -37,6 +38,7 @@ public class EventDetailsActivity extends AppCompatActivity {
     private String eventId;
     private String deviceId;
     private boolean onWaitingList;
+    private String waitingListStatus;
 
     private TextView titleView, organizerView, dateView, statusView, descriptionView, criteriaView, waitingListCountView;
     private MaterialButton joinLeaveButton;
@@ -104,6 +106,9 @@ public class EventDetailsActivity extends AppCompatActivity {
         db.collection("events").document(eventId).get()
                 .addOnSuccessListener(this::onEventLoaded)
                 .addOnFailureListener(e -> {
+                    Log.e("FirestoreError", "Failed to load event", e);  // full stack trace
+                    e.printStackTrace(); // prints stack trace in Logcat
+
                     Toast.makeText(this, "Could not load event", Toast.LENGTH_SHORT).show();
                     finish();
                 });
@@ -123,9 +128,18 @@ public class EventDetailsActivity extends AppCompatActivity {
         }
 
         db.collection("events").document(eventId)
-                .collection("waitingList").document(deviceId).get()
+                .collection("waitingList")
+                .document(deviceId)
+                .get()
                 .addOnSuccessListener(doc -> {
                     onWaitingList = doc != null && doc.exists();
+
+                    if (onWaitingList) {
+                        waitingListStatus = doc.getString("status");
+                    } else {
+                        waitingListStatus = null;
+                    }
+
                     updateStatusAndButton();
                 });
 
@@ -168,12 +182,53 @@ public class EventDetailsActivity extends AppCompatActivity {
     }
 
     private void updateStatusAndButton() {
-        if (onWaitingList) {
-            statusView.setText(R.string.status_pending);
-            joinLeaveButton.setText(R.string.leave_waiting_list);
-        } else {
+        if (!onWaitingList) {
             statusView.setText(R.string.status_not_joined);
             joinLeaveButton.setText(R.string.request_to_join);
+            return;
+        }
+
+        if (waitingListStatus == null || waitingListStatus.isEmpty()) {
+            statusView.setText(R.string.status_pending);
+            joinLeaveButton.setText(R.string.leave_waiting_list);
+            return;
+        }
+
+        switch (waitingListStatus) {
+            case "PENDING":
+                statusView.setText(R.string.status_pending);
+                joinLeaveButton.setText(R.string.leave_waiting_list);
+                break;
+
+            case "SELECTED":
+                statusView.setText("Selected");
+                joinLeaveButton.setText(R.string.leave_waiting_list);
+                break;
+
+            case "ACCEPTED":
+                statusView.setText("Accepted");
+                joinLeaveButton.setText(R.string.leave_waiting_list);
+                break;
+
+            case "DECLINED":
+                statusView.setText("Declined");
+                joinLeaveButton.setText(R.string.request_to_join);
+                break;
+
+            case "CANCELLED":
+                statusView.setText("Cancelled");
+                joinLeaveButton.setText(R.string.request_to_join);
+                break;
+
+            case "WAITING":
+                statusView.setText("Waiting");
+                joinLeaveButton.setText(R.string.leave_waiting_list);
+                break;
+
+            default:
+                statusView.setText(waitingListStatus);
+                joinLeaveButton.setText(R.string.leave_waiting_list);
+                break;
         }
     }
 
@@ -192,23 +247,32 @@ public class EventDetailsActivity extends AppCompatActivity {
                         Toast.makeText(this, "Event not found", Toast.LENGTH_SHORT).show();
                         return;
                     }
+
                     Event event = eventDoc.toObject(Event.class);
                     if (event != null && !event.isRegistrationOpen()) {
                         Toast.makeText(this, "Registration is closed for this event", Toast.LENGTH_SHORT).show();
                         return;
                     }
-                    WaitingListEntry entry = new WaitingListEntry(deviceId, WaitingListEntry.Status.PENDING);
-                    db.collection("events").document(eventId)
-                            .collection("waitingList").document(deviceId)
+
+                    WaitingListEntry entry =
+                            new WaitingListEntry(deviceId, WaitingListEntry.Status.PENDING);
+
+                    db.collection("events")
+                            .document(eventId)
+                            .collection("waitingList")
+                            .document(deviceId)
                             .set(entry)
                             .addOnSuccessListener(aVoid -> {
                                 onWaitingList = true;
+                                waitingListStatus = WaitingListEntry.Status.PENDING.name();
                                 updateStatusAndButton();
                                 Toast.makeText(this, "You have joined the waiting list", Toast.LENGTH_SHORT).show();
                             })
                             .addOnFailureListener(e ->
                                     Toast.makeText(this, "Failed to join", Toast.LENGTH_SHORT).show());
-                });
+                })
+                .addOnFailureListener(e ->
+                        Toast.makeText(this, "Failed to load event", Toast.LENGTH_SHORT).show());
     }
 
     private void leaveWaitingList() {
@@ -217,6 +281,7 @@ public class EventDetailsActivity extends AppCompatActivity {
                 .delete()
                 .addOnSuccessListener(aVoid -> {
                     onWaitingList = false;
+                    waitingListStatus = null;
                     updateStatusAndButton();
                     Toast.makeText(this, "You have left the waiting list", Toast.LENGTH_SHORT).show();
                 })

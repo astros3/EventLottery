@@ -10,6 +10,7 @@ import androidx.annotation.Nullable;
 import androidx.fragment.app.Fragment;
 import androidx.navigation.fragment.NavHostFragment;
 
+import com.google.firebase.firestore.DocumentSnapshot;
 import com.google.firebase.firestore.FirebaseFirestore;
 
 import java.util.ArrayList;
@@ -73,7 +74,8 @@ public class SelectedList extends Fragment {
                 .addOnSuccessListener(querySnapshot -> {
                     selectedEntries.clear();
 
-                    for (var doc : querySnapshot.getDocuments()) {
+                    for (DocumentSnapshot doc : querySnapshot.getDocuments())
+                    {
                         WaitingListEntry entry = doc.toObject(WaitingListEntry.class);
                         if (entry != null &&
                                 WaitingListEntry.Status.SELECTED.name().equals(entry.getStatus())) {
