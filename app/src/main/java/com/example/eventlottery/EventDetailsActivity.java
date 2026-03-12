@@ -24,9 +24,8 @@ import java.util.List;
 import java.util.Locale;
 
 /**
- * Event Details screen for entrants.
- * Implements US 01.01.01 (join waiting list), US 01.01.02 (leave waiting list),
- * US 01.06.02 (sign up from event details).
+ * Event details and join/leave waiting list (US 01.01.01, 01.01.02, 01.06.02). Enforces
+ * registration window and optional waiting list limit before allowing join.
  */
 public class EventDetailsActivity extends AppCompatActivity {
 
