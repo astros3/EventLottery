@@ -22,8 +22,7 @@ import java.util.Collections;
 import java.util.List;
 
 /**
- * Organizer landing screen: list of events created by the current organizer,
- * with Create a New Event and Profile in the bottom bar.
+ * Organizer dashboard: lists events where organizerId == deviceId. Create event, open event nav, or profile.
  */
 public class OrganizerDashboardFragment extends Fragment {
 
