@@ -43,7 +43,8 @@
 
         <activity
             android:name=".EntrantMainScreenActivity"
-            android:exported="false" />
+            android:exported="false"
+            android:parentActivityName=".WelcomePageActivity"/>
 
         <activity
             android:name=".AdminEventControlScreenActivity"
@@ -72,6 +73,10 @@
             android:name=".OrganizerProfileActivity"
             android:exported="false"
             android:parentActivityName=".MainActivity" />
+
+
+
+
     </application>
 
 </manifest>
