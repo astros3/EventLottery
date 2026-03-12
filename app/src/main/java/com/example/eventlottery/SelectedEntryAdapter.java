@@ -24,7 +24,7 @@ public class SelectedEntryAdapter extends ArrayAdapter<WaitingListEntry> {
     private final OnDeleteClickListener listener;
 
     public SelectedEntryAdapter(FragmentActivity activity,
-                                ArrayList<Waiting_list> entries,
+                                ArrayList<WaitingListEntry> entries,
                                 OnDeleteClickListener listener) {
         super(activity, 0, entries);
         this.activity = activity;
@@ -41,13 +41,12 @@ public class SelectedEntryAdapter extends ArrayAdapter<WaitingListEntry> {
             view = LayoutInflater.from(activity).inflate(R.layout.item_selected_entry, parent, false);
         }
 
-        Waiting_list entry = entries.get(position);
-        Entrant entrant = entry.getEntrant();
+        WaitingListEntry entry = entries.get(position);
 
         TextView textEntrantName = view.findViewById(R.id.textEntrantName);
         ImageView buttonDelete = view.findViewById(R.id.buttonDelete);
 
-        textEntrantName.setText(entrant.getFullName());
+        textEntrantName.setText(entry.getDeviceId());
 
         buttonDelete.setOnClickListener(v -> listener.onDeleteClick(entry));
 

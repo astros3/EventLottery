@@ -21,7 +21,8 @@ public class WaitingEntryAdapter extends ArrayAdapter<WaitingListEntry> {
     private final FragmentActivity activity;
     private final ArrayList<WaitingListEntry> entries;
 
-    public WaitingEntryAdapter(FragmentActivity activity, ArrayList<WaitingListEntry> entries) {
+    public WaitingEntryAdapter(@NonNull FragmentActivity activity,
+                               @NonNull ArrayList<WaitingListEntry> entries) {
         super(activity, 0, entries);
         this.activity = activity;
         this.entries = entries;
@@ -37,24 +38,16 @@ public class WaitingEntryAdapter extends ArrayAdapter<WaitingListEntry> {
         }
 
         WaitingListEntry entry = entries.get(position);
-        Entrant entrant = entry.getEntrant();
 
         TextView textEntrantName = view.findViewById(R.id.textEntrantName);
         ImageView buttonLocation = view.findViewById(R.id.buttonLocation);
 
-        textEntrantName.setText(entrant.getFullName());
+        String deviceId = entry.getDeviceId();
+        textEntrantName.setText(deviceId);
 
         buttonLocation.setOnClickListener(v -> {
             Bundle bundle = new Bundle();
-            bundle.putString("entrant_name", entrant.getFullName());
-            bundle.putString("location_address", entrant.getLocationAddress());
-
-            if (entrant.getLatitude() != null) {
-                bundle.putDouble("latitude", entrant.getLatitude());
-            }
-            if (entrant.getLongitude() != null) {
-                bundle.putDouble("longitude", entrant.getLongitude());
-            }
+            bundle.putString("deviceId", deviceId);
 
             NavController navController =
                     Navigation.findNavController(activity, R.id.nav_host_fragment);
