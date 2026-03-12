@@ -15,9 +15,12 @@ import androidx.appcompat.widget.Toolbar;
 
 import com.example.eventlottery.DeviceIdManager;
 import com.google.firebase.firestore.DocumentSnapshot;
-import android.util.Log;
 
 import androidx.annotation.NonNull;
+
+import androidx.activity.result.ActivityResultLauncher;
+import com.journeyapps.barcodescanner.ScanContract;
+import com.journeyapps.barcodescanner.ScanOptions;
 
 import com.google.android.gms.tasks.OnCompleteListener;
 import com.google.android.gms.tasks.Task;
@@ -36,6 +39,23 @@ import java.util.Date;
  */
 
 public class EntrantMainScreenActivity extends AppCompatActivity {
+
+    //scanner code
+    private final ActivityResultLauncher<ScanOptions> qrScanner =
+            registerForActivityResult(new ScanContract(), result -> {
+                if (result.getContents() != null) {
+
+                    String scannedValue = result.getContents().trim();
+
+                    if (scannedValue.contains("/")) {
+                        scannedValue = scannedValue.substring(scannedValue.lastIndexOf("/") + 1);
+                    }
+
+                    Intent intent = new Intent(EntrantMainScreenActivity.this, EventDetailsActivity.class);
+                    intent.putExtra(EventDetailsActivity.EXTRA_EVENT_ID, scannedValue);
+                    startActivity(intent);
+                }
+            });
 
     private ArrayList<Event> eventlist;
     private ArrayList<String[]> userstatuseventlist;
@@ -65,6 +85,7 @@ public class EntrantMainScreenActivity extends AppCompatActivity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.entrant_main_screen);
+
 
         Toolbar toolbar = findViewById(R.id.toolbar);
         setSupportActionBar(toolbar);
@@ -212,10 +233,12 @@ public class EntrantMainScreenActivity extends AppCompatActivity {
             //startActivity(intent);
         });
 
-        //navigates to scan activity
+        //launch QR scanner
         navigationscanbutton.setOnClickListener(v -> {
-            Intent intent = new Intent(EntrantMainScreenActivity.this, QRCodeActivity.class);
-            startActivity(intent);
+            ScanOptions options = new ScanOptions();
+            options.setDesiredBarcodeFormats(ScanOptions.QR_CODE);
+            options.setPrompt("Scan event QR code");
+            qrScanner.launch(options);
         });
 
         //navigates to history activity

@@ -87,7 +87,8 @@ public class QRCodeActivity extends AppCompatActivity {
 
     private void generateAndDisplayQrCode() {
         // QR code encodes eventId - when scanned, MainActivity opens EventDetailsActivity with this id
-        android.graphics.Bitmap bitmap = QRCodeService.generateQrCodeBitmap(eventId);
+        String qrData = "eventlottery://event/" + eventId;
+        android.graphics.Bitmap bitmap = QRCodeService.generateQrCodeBitmap(qrData);
         if (bitmap != null) {
             qrCodeImage.setImageBitmap(bitmap);
         } else {
