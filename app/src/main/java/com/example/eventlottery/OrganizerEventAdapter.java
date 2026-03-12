@@ -15,7 +15,7 @@ import java.util.List;
 import java.util.Locale;
 
 /**
- * RecyclerView adapter for organizer's event cards on the dashboard.
+ * RecyclerView adapter for organizer dashboard event cards. View/Edit open event nav or EventEditActivity.
  */
 public class OrganizerEventAdapter extends RecyclerView.Adapter<OrganizerEventAdapter.EventCardViewHolder> {
 
