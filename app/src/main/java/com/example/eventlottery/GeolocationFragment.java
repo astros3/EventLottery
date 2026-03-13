@@ -2,7 +2,7 @@ package com.example.eventlottery;
 
 /**
  * Shows entrant location on a map (from waiting list or users). Used from Waiting List flow.
- * Reads deviceId/entrant data from Firestore to display marker and address.
+ * Reads entrant data from Firestore; displays name only, never device ID.
  */
 import android.os.Bundle;
 import android.view.View;
@@ -70,7 +70,7 @@ public class GeolocationFragment extends Fragment implements OnMapReadyCallback 
 
     private void loadEntrantLocation() {
         if (deviceId == null || deviceId.isEmpty()) {
-            Toast.makeText(getContext(), "Missing entrant device ID", Toast.LENGTH_SHORT).show();
+            Toast.makeText(getContext(), "Entrant not specified", Toast.LENGTH_SHORT).show();
             textLocationOf.setText("LOCATION OF: Unknown");
             textLocationAddress.setText("No location available");
             return;
@@ -82,7 +82,7 @@ public class GeolocationFragment extends Fragment implements OnMapReadyCallback 
                 .addOnSuccessListener(documentSnapshot -> {
                     if (!documentSnapshot.exists()) {
                         Toast.makeText(getContext(), "Entrant profile not found", Toast.LENGTH_SHORT).show();
-                        textLocationOf.setText("LOCATION OF: " + deviceId);
+                        textLocationOf.setText("LOCATION OF: Unknown Entrant");
                         textLocationAddress.setText("No location available");
                         return;
                     }
@@ -93,7 +93,7 @@ public class GeolocationFragment extends Fragment implements OnMapReadyCallback 
                         if (entrant.getFullName() != null && !entrant.getFullName().trim().isEmpty()) {
                             entrantName = entrant.getFullName();
                         } else {
-                            entrantName = deviceId;
+                            entrantName = "Unknown Entrant";
                         }
 
                         if (entrant.getLocationAddress() != null && !entrant.getLocationAddress().trim().isEmpty()) {
@@ -108,7 +108,7 @@ public class GeolocationFragment extends Fragment implements OnMapReadyCallback 
                             longitude = entrant.getLongitude();
                         }
                     } else {
-                        entrantName = deviceId;
+                        entrantName = "Unknown Entrant";
                     }
 
                     textLocationOf.setText("LOCATION OF: " + entrantName);
@@ -117,7 +117,7 @@ public class GeolocationFragment extends Fragment implements OnMapReadyCallback 
                 })
                 .addOnFailureListener(e -> {
                     Toast.makeText(getContext(), "Failed to load entrant location", Toast.LENGTH_SHORT).show();
-                    textLocationOf.setText("LOCATION OF: " + deviceId);
+                    textLocationOf.setText("LOCATION OF: Unknown Entrant");
                     textLocationAddress.setText("No location available");
                 });
     }

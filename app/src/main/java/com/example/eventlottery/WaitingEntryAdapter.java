@@ -1,8 +1,8 @@
 package com.example.eventlottery;
 
 /**
- * List adapter for WaitingListEntry in WaitingListFragment. Shows deviceId/status; can navigate
- * to GeolocationFragment for an entrant.
+ * List adapter for WaitingListEntry in WaitingListFragment. Shows entrant display name (from users collection);
+ * never exposes device ID. Can navigate to GeolocationFragment for an entrant.
  */
 import android.os.Bundle;
 import android.view.LayoutInflater;
@@ -59,7 +59,7 @@ public class WaitingEntryAdapter extends ArrayAdapter<WaitingListEntry> {
         String displayName = deviceIdToName != null && deviceIdToName.containsKey(deviceId)
                 ? deviceIdToName.get(deviceId)
                 : null;
-        textEntrantName.setText(displayName != null && !displayName.isEmpty() ? displayName : (deviceId != null ? deviceId : "Unknown Entrant"));
+        textEntrantName.setText(displayName != null && !displayName.isEmpty() ? displayName : "Unknown Entrant");
 
         buttonLocation.setOnClickListener(v -> {
             Bundle bundle = new Bundle();
