@@ -127,7 +127,8 @@ public class EventEditActivity extends AppCompatActivity {
         }
 
         List<Place.Field> fields = Arrays.asList(Place.Field.ADDRESS, Place.Field.NAME, Place.Field.LAT_LNG);
-        Intent autocompleteIntent = new Autocomplete.IntentBuilder(AutocompleteActivityMode.FULLSCREEN, fields)
+        // OVERLAY keeps the search in the same activity so it doesn't close after first keystroke
+        Intent autocompleteIntent = new Autocomplete.IntentBuilder(AutocompleteActivityMode.OVERLAY, fields)
                 .build(this);
 
         ActivityResultLauncher<Intent> placeAutocompleteLauncher = registerForActivityResult(
