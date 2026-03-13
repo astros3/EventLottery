@@ -73,6 +73,8 @@ public class UITestUser{
     public void navigationtoUser() {
         onView(withId(R.id.userbutton)).perform(click());
 
+
+
     }
 
 }

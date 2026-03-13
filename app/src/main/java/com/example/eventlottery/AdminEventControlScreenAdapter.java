@@ -92,8 +92,11 @@ public class AdminEventControlScreenAdapter extends ArrayAdapter<Event> {
         //show organizer name event image event title
         String eventownername_fromgetter = event.getOrganizerName();
         eventorganizerownernameinput.setText(eventownername_fromgetter);
-        eventphoto.setImageURI(android.net.Uri.parse(eventposteruri_fromgetter));//event photo from uri
-        eventnameinput.setText(eventnameinput_fromgetter);
+        if (eventposteruri_fromgetter != null && !eventposteruri_fromgetter.isEmpty()) {
+            eventphoto.setImageURI(android.net.Uri.parse(eventposteruri_fromgetter));
+        } else {
+            eventphoto.setImageResource(R.drawable.ic_launcher_background); // fallback image
+        }        eventnameinput.setText(eventnameinput_fromgetter);
 
         //when admin clicks on a specific history item it will navigates to admin event details panel
         adminviewdetailbutton.setOnClickListener(v -> {
