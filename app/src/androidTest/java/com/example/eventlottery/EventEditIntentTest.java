@@ -2,6 +2,7 @@ package com.example.eventlottery;
 
 import static androidx.test.espresso.Espresso.onView;
 import static androidx.test.espresso.action.ViewActions.closeSoftKeyboard;
+import static androidx.test.espresso.action.ViewActions.scrollTo;
 import static androidx.test.espresso.action.ViewActions.typeText;
 import static androidx.test.espresso.assertion.ViewAssertions.matches;
 import static androidx.test.espresso.matcher.ViewMatchers.isDisplayed;
@@ -116,7 +117,9 @@ public class EventEditIntentTest {
     @Test
     public void testWaitingListLimitAndGeolocationSwitchAreDisplayed() {
         try (ActivityScenario<EventEditActivity> scenario = ActivityScenario.launch(createEditIntent())) {
+            onView(withId(R.id.input_waiting_list_limit)).perform(scrollTo());
             onView(withId(R.id.input_waiting_list_limit)).check(matches(isDisplayed()));
+            onView(withId(R.id.switch_geolocation)).perform(scrollTo());
             onView(withId(R.id.switch_geolocation)).check(matches(isDisplayed()));
         }
     }
@@ -126,6 +129,8 @@ public class EventEditIntentTest {
         try (ActivityScenario<EventEditActivity> scenario = ActivityScenario.launch(createEditIntent())) {
             onView(withId(R.id.event_image_container)).check(matches(isDisplayed()));
             onView(withId(R.id.event_poster_placeholder)).check(matches(isDisplayed()));
+            // Confirm button is below the fold in the ScrollView; scroll it into view first
+            onView(withId(R.id.btn_confirm)).perform(scrollTo());
             onView(withId(R.id.btn_confirm)).check(matches(isDisplayed()));
         }
     }
