@@ -59,16 +59,6 @@
             <!--
                filter button
             -->
-            <ImageView
-                android:id="@+id/admin_event_filter_button"
-                android:clickable="true"
-
-                android:layout_width="30dp"
-
-                android:layout_marginStart="5dp"
-                android:layout_height="20dp"
-
-                android:src="@drawable/burger" />
             <!--
                user input
             -->
