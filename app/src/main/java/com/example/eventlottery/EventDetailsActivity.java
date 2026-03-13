@@ -3,6 +3,7 @@ package com.example.eventlottery;
 import android.graphics.PorterDuff;
 import android.graphics.drawable.Drawable;
 import android.os.Bundle;
+import android.widget.ImageView;
 import android.util.Log;
 import android.view.View;
 import android.widget.LinearLayout;
@@ -15,6 +16,7 @@ import androidx.appcompat.app.AppCompatActivity;
 import androidx.appcompat.widget.Toolbar;
 import androidx.core.content.ContextCompat;
 
+import com.bumptech.glide.Glide;
 import com.google.android.material.button.MaterialButton;
 import com.google.firebase.firestore.DocumentSnapshot;
 import com.google.firebase.firestore.FirebaseFirestore;
@@ -41,6 +43,7 @@ public class EventDetailsActivity extends AppCompatActivity {
     private String waitingListStatus;
 
     private TextView titleView, organizerView, dateView, statusView, descriptionView, criteriaView, waitingListCountView;
+    private ImageView posterView;
     private MaterialButton joinLeaveButton;
     private LinearLayout invitationButtonsContainer;
     private MaterialButton acceptInvitationButton;
@@ -101,6 +104,7 @@ public class EventDetailsActivity extends AppCompatActivity {
         descriptionView = findViewById(R.id.event_description);
         criteriaView = findViewById(R.id.event_selection_criteria);
         waitingListCountView = findViewById(R.id.event_waiting_list_count);
+        posterView = findViewById(R.id.event_poster);
         joinLeaveButton = findViewById(R.id.btn_join_leave);
         joinLeaveButton.setOnClickListener(v -> onJoinLeaveClicked());
         invitationButtonsContainer = findViewById(R.id.invitation_buttons_container);
@@ -185,7 +189,12 @@ public class EventDetailsActivity extends AppCompatActivity {
             }
             criteriaView.setText(sb.toString());
         }
-        // Poster loading can be added later (e.g. Glide with event.getPosterUri())
+        String posterUri = event.getPosterUri();
+        if (posterUri != null && !posterUri.isEmpty()) {
+            Glide.with(this).load(posterUri).centerCrop().into(posterView);
+        } else {
+            posterView.setImageDrawable(null);
+        }
     }
 
     private static String formatDate(long millis) {

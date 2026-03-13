@@ -13,6 +13,8 @@ import android.widget.TextView;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 
+import com.bumptech.glide.Glide;
+
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.HashMap;
@@ -73,7 +75,12 @@ public class EntrantMainScreenAdapter extends ArrayAdapter<Event> {
         String date = format1.format(eventdateinput_fromgetter);
         eventdateinput.setText(date);
 
-        eventphoto.setImageURI(null);
+        String posterUri = event.getPosterUri();
+        if (posterUri != null && !posterUri.isEmpty()) {
+            Glide.with(context).load(posterUri).centerCrop().into(eventphoto);
+        } else {
+            eventphoto.setImageDrawable(null);
+        }
 
         boolean isSelected = "SELECTED".equalsIgnoreCase(eventIdToStatus.get(event.getEventId()));
         if (isSelected) {

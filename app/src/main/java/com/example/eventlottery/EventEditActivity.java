@@ -27,6 +27,10 @@ import com.google.android.libraries.places.widget.Autocomplete;
 import com.google.android.libraries.places.widget.model.AutocompleteActivityMode;
 import com.google.firebase.firestore.DocumentSnapshot;
 import com.google.firebase.firestore.FirebaseFirestore;
+import com.google.android.gms.tasks.Tasks;
+import com.google.firebase.storage.FirebaseStorage;
+import com.google.firebase.storage.StorageReference;
+import com.bumptech.glide.Glide;
 
 import java.util.Arrays;
 import java.util.List;
@@ -313,10 +317,15 @@ public class EventEditActivity extends AppCompatActivity {
         // Existing event with location is treated as valid (e.g. created before Places requirement)
         locationSelectedFromPlaces = (event.getLocation() != null && !event.getLocation().trim().isEmpty());
 
-        //making sure organizer sees the existing poster view when editing
+        // Show existing poster (from Storage URL or legacy content URI) when editing
         if (event.getPosterUri() != null && !event.getPosterUri().isEmpty()) {
-            selectedPosterUri = android.net.Uri.parse(event.getPosterUri());
-            posterImageView.setImageURI(selectedPosterUri);
+            String uri = event.getPosterUri();
+            if (uri.startsWith("content://")) {
+                selectedPosterUri = android.net.Uri.parse(uri);
+                posterImageView.setImageURI(selectedPosterUri);
+            } else {
+                Glide.with(this).load(uri).centerCrop().into(posterImageView);
+            }
         }
 
         inputLimit.setText(event.getWaitingListLimit() > 0 ? String.valueOf(event.getWaitingListLimit()) : "");
@@ -390,12 +399,6 @@ public class EventEditActivity extends AppCompatActivity {
         event.setTitle(title);
         event.setDescription(description);
         event.setLocation(location);
-
-        //attaching the poster to the event object
-        if (selectedPosterUri != null) {
-            event.setPosterUri(selectedPosterUri.toString());
-        }
-
         event.setOrganizerId(deviceId);
         event.setOrganizerName(organizerName != null ? organizerName : "Organizer");
         event.setWaitingListLimit(limit);
@@ -408,7 +411,39 @@ public class EventEditActivity extends AppCompatActivity {
             eventId = db.collection("events").document().getId();
             event.setEventId(eventId);
             event.setPromoCode(QRCodeService.generatePromoCode());
+        }
 
+        if (selectedPosterUri != null) {
+            // Upload poster to Firebase Storage and use download URL in event
+            uploadPosterAndThenSave(event, isCreate);
+        } else {
+            // No new poster: create saves without poster; update keeps existing poster
+            persistEvent(event, isCreate);
+        }
+    }
+
+    /** Uploads selected image to Storage at events/{eventId}/poster, then persists event with download URL. */
+    private void uploadPosterAndThenSave(Event event, boolean isCreate) {
+        StorageReference posterRef = FirebaseStorage.getInstance().getReference()
+                .child("events").child(eventId).child("poster.jpg");
+        posterRef.putFile(selectedPosterUri)
+                .continueWithTask(task -> {
+                    if (!task.isSuccessful()) {
+                        return Tasks.forException(task.getException() != null ? task.getException() : new Exception("Upload failed"));
+                    }
+                    return posterRef.getDownloadUrl();
+                })
+                .addOnSuccessListener(downloadUri -> {
+                    event.setPosterUri(downloadUri.toString());
+                    persistEvent(event, isCreate);
+                })
+                .addOnFailureListener(e -> {
+                    Toast.makeText(this, "Failed to upload poster: " + (e.getMessage() != null ? e.getMessage() : "unknown"), Toast.LENGTH_LONG).show();
+                });
+    }
+
+    private void persistEvent(Event event, boolean isCreate) {
+        if (isCreate) {
             db.collection("events").document(eventId).set(event)
                     .addOnSuccessListener(aVoid -> {
                         saveCurrentEventId(eventId);
@@ -439,6 +474,9 @@ public class EventEditActivity extends AppCompatActivity {
                         existing.setRegistrationEndMillis(event.getRegistrationEndMillis());
                         existing.setEventDateMillis(event.getEventDateMillis());
                         existing.setGeolocationRequired(event.isGeolocationRequired());
+                        if (event.getPosterUri() != null) {
+                            existing.setPosterUri(event.getPosterUri());
+                        }
 
                         db.collection("events").document(eventId).set(existing)
                                 .addOnSuccessListener(aVoid -> {
