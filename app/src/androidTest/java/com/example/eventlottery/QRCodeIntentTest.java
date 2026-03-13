@@ -32,7 +32,7 @@ import java.util.concurrent.TimeUnit;
  * US 1.06.01 - As an entrant I want to view event details by scanning the promotional QR code (scan flow launches EventDetailsActivity).
  *
  * Creates a test organizer and event in Firestore in @Before so the test device is the event's organizer;
- * QRCodeActivity then loads and shows the QR screen. Deletes the event in @After.
+ * QRCodeActivity then loads and shows the QR screen. In @After deletes the event and organizer so the test is idempotent.
  */
 @RunWith(AndroidJUnit4.class)
 @LargeTest
@@ -75,14 +75,13 @@ public class QRCodeIntentTest {
     }
 
     @After
-    public void deleteTestEvent() throws Exception {
+    public void deleteTestEventAndOrganizer() throws Exception {
+        FirebaseFirestore db = FirebaseFirestore.getInstance();
         if (createdEventId != null) {
-            Tasks.await(
-                    FirebaseFirestore.getInstance()
-                            .collection("events")
-                            .document(createdEventId)
-                            .delete()
-            );
+            Tasks.await(db.collection("events").document(createdEventId).delete());
+        }
+        if (deviceId != null) {
+            Tasks.await(db.collection("organizers").document(deviceId).delete());
         }
     }
 

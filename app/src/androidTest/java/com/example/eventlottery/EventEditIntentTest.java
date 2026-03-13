@@ -35,7 +35,7 @@ import java.util.concurrent.TimeUnit;
  * US 02.03.01 - Optionally limit waiting list; US 02.04.01 - Upload event poster.
  *
  * Creates a test organizer and event in Firestore in @Before, launches EventEditActivity
- * in edit mode for each test, and deletes the event in @After. No hardcoded event ID needed.
+ * in edit mode for each test. In @After deletes the event and the organizer doc so the test is idempotent.
  */
 @RunWith(AndroidJUnit4.class)
 @LargeTest
@@ -80,14 +80,13 @@ public class EventEditIntentTest {
     }
 
     @After
-    public void deleteTestEvent() throws Exception {
+    public void deleteTestEventAndOrganizer() throws Exception {
+        FirebaseFirestore db = FirebaseFirestore.getInstance();
         if (createdEventId != null) {
-            Tasks.await(
-                    FirebaseFirestore.getInstance()
-                            .collection("events")
-                            .document(createdEventId)
-                            .delete()
-            );
+            Tasks.await(db.collection("events").document(createdEventId).delete());
+        }
+        if (deviceId != null) {
+            Tasks.await(db.collection("organizers").document(deviceId).delete());
         }
     }
 
