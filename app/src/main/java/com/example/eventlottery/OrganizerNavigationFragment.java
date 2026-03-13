@@ -57,5 +57,9 @@ public class OrganizerNavigationFragment extends Fragment {
                 NavHostFragment.findNavController(OrganizerNavigationFragment.this)
                         .navigate(R.id.OrganizerNavigationFragment_to_Selected_list)
         );
+        view.findViewById(R.id.buttonFinal).setOnClickListener(v ->
+                NavHostFragment.findNavController(OrganizerNavigationFragment.this)
+                        .navigate(R.id.OrganizerNavigationFragment_to_Final_list)
+        );
     }
 }
