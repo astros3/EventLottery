@@ -227,7 +227,7 @@ public class EventDetailsActivity extends AppCompatActivity {
                 statusView.setText("Accepted");
                 joinLeaveButton.setVisibility(View.VISIBLE);
                 invitationButtonsContainer.setVisibility(View.GONE);
-                joinLeaveButton.setText(R.string.leave_waiting_list);
+                joinLeaveButton.setText(R.string.leave_selected_list);
                 break;
 
             case "DECLINED":
