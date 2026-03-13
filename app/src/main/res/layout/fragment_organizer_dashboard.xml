@@ -15,7 +15,8 @@
         android:elevation="4dp"
         app:title="@string/organizer_dashboard"
         app:titleTextColor="#0B162C"
-        app:titleTextAppearance="@style/TextAppearance.AppCompat.Title" />
+        app:titleTextAppearance="@style/TextAppearance.AppCompat.Title"
+        app:navigationIcon="@drawable/ic_back_arrow" />
 
     <FrameLayout
         android:layout_width="match_parent"

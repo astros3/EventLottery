@@ -23,9 +23,18 @@
             android:layout_height="match_parent"
             android:orientation="horizontal"
             android:gravity="center_vertical">
+            <ImageButton
+                android:id="@+id/btn_back"
+                android:layout_width="40dp"
+                android:layout_height="40dp"
+                android:layout_marginStart="8dp"
+                android:background="?attr/selectableItemBackgroundBorderless"
+                android:contentDescription="@string/back"
+                android:src="@drawable/ic_back_arrow"
+                android:scaleType="centerInside" />
             <ImageView
                 android:id="@+id/homedisplay"
-                android:layout_marginStart="30dp"
+                android:layout_marginStart="16dp"
                 android:layout_width="25dp"
                 android:layout_height="25dp"
                 android:src="@drawable/home_selected" />

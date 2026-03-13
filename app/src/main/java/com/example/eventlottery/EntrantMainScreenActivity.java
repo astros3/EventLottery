@@ -83,12 +83,10 @@ public class EntrantMainScreenActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.entrant_main_screen);
 
-        if (getSupportActionBar() != null) {
-            getSupportActionBar().setDisplayHomeAsUpEnabled(true);
-        }
-
         Toolbar toolbar = findViewById(R.id.toolbar);
         setSupportActionBar(toolbar);
+
+        findViewById(R.id.btn_back).setOnClickListener(v -> finish());
 
         events = findViewById(R.id.Events);
         notificationbellbutton = findViewById(R.id.notification_Bell_Button);
