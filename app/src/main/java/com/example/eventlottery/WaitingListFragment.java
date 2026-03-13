@@ -4,6 +4,7 @@ package com.example.eventlottery;
  * Shows PENDING entries in events/{eventId}/waitingList. Event ID from EventEditActivity.getCurrentEventId().
  */
 import android.os.Bundle;
+import android.util.Log;
 import android.view.View;
 import android.widget.ListView;
 import android.widget.Toast;
@@ -11,7 +12,6 @@ import android.widget.Toast;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.fragment.app.Fragment;
-import androidx.navigation.NavController;
 import androidx.navigation.fragment.NavHostFragment;
 
 import com.google.firebase.firestore.DocumentSnapshot;
@@ -23,6 +23,8 @@ import java.util.Map;
 import java.util.concurrent.atomic.AtomicInteger;
 
 public class WaitingListFragment extends Fragment {
+
+    private static final String TAG = "ViewGeolocation";
 
     private final ArrayList<WaitingListEntry> waitingEntries = new ArrayList<>();
     private WaitingEntryAdapter adapter;
@@ -41,8 +43,7 @@ public class WaitingListFragment extends Fragment {
         eventId = EventEditActivity.getCurrentEventId(requireContext());
 
         ListView listView = view.findViewById(R.id.listWaitingEntrants);
-        NavController navController = NavHostFragment.findNavController(WaitingListFragment.this);
-        adapter = new WaitingEntryAdapter(requireActivity(), waitingEntries, navController);
+        adapter = new WaitingEntryAdapter(requireActivity(), waitingEntries);
         listView.setAdapter(adapter);
 
         view.findViewById(R.id.buttonBack).setOnClickListener(v ->
@@ -70,23 +71,24 @@ public class WaitingListFragment extends Fragment {
                 .get()
                 .addOnSuccessListener(querySnapshot -> {
                     waitingEntries.clear();
-
                     for (DocumentSnapshot doc : querySnapshot.getDocuments()) {
                         WaitingListEntry entry = doc.toObject(WaitingListEntry.class);
                         if (entry != null &&
                                 WaitingListEntry.Status.PENDING.name().equals(entry.getStatus())) {
-                            // Use document ID as deviceId when entry.deviceId is missing (doc ID is deviceId)
                             if (entry.getDeviceId() == null || entry.getDeviceId().isEmpty()) {
                                 entry.setDeviceId(doc.getId());
+                                Log.d(TAG, "WaitingList: set deviceId from doc id for entry");
                             }
                             waitingEntries.add(entry);
                         }
                     }
-
+                    Log.d(TAG, "WaitingList: loaded " + waitingEntries.size() + " PENDING entries");
                     resolveEntrantNamesAndNotify();
                 })
-                .addOnFailureListener(e ->
-                        Toast.makeText(getContext(), "Failed to load waiting list", Toast.LENGTH_SHORT).show());
+                .addOnFailureListener(e -> {
+                    Log.e(TAG, "WaitingList: load failed", e);
+                    Toast.makeText(getContext(), "Failed to load waiting list", Toast.LENGTH_SHORT).show();
+                });
     }
 
     /** Fetches entrant display names from users/{deviceId} and updates the adapter. */

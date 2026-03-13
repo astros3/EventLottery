@@ -1,12 +1,12 @@
 package com.example.eventlottery;
 
 /**
- * Shows entrant location on a map (from waiting list or users). Used from Waiting List flow.
- * Reads entrant data from Firestore; displays name only, never device ID.
- * If only locationAddress is in DB, geocodes it to get latitude/longitude for the map.
+ * Shows entrant location on a map. If only locationAddress is in DB, geocodes it for lat/lng.
  */
+import android.location.Address;
 import android.location.Geocoder;
 import android.os.Bundle;
+import android.util.Log;
 import android.view.View;
 import android.widget.TextView;
 import android.widget.Toast;
@@ -14,7 +14,6 @@ import android.widget.Toast;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.fragment.app.Fragment;
-import androidx.fragment.app.FragmentContainerView;
 import androidx.navigation.fragment.NavHostFragment;
 
 import com.google.android.gms.maps.CameraUpdateFactory;
@@ -29,9 +28,9 @@ import java.util.List;
 import java.util.Locale;
 import java.util.concurrent.Executors;
 
-import android.location.Address;
-
 public class GeolocationFragment extends Fragment implements OnMapReadyCallback {
+
+    private static final String TAG = "ViewGeolocation";
 
     private double latitude = 0.0;
     private double longitude = 0.0;
@@ -61,9 +60,7 @@ public class GeolocationFragment extends Fragment implements OnMapReadyCallback 
         if (args != null) {
             deviceId = args.getString("deviceId");
         }
-        if (deviceId == null) {
-            deviceId = "";
-        }
+        Log.d(TAG, "onViewCreated: args=" + (args != null) + ", deviceId=" + (deviceId != null ? "present(len=" + deviceId.length() + ")" : "null"));
 
         textLocationOf.setText("LOCATION OF: Loading...");
         textLocationAddress.setText("Loading location...");
@@ -71,43 +68,32 @@ public class GeolocationFragment extends Fragment implements OnMapReadyCallback 
         view.findViewById(R.id.buttonBackGeo).setOnClickListener(v ->
                 NavHostFragment.findNavController(GeolocationFragment.this).navigateUp());
 
-        // Map fragment may not be attached yet; look it up after layout pass
-        view.post(() -> {
-            getChildFragmentManager().executePendingTransactions();
-            SupportMapFragment mapFragment = (SupportMapFragment) getChildFragmentManager().findFragmentById(R.id.map);
-            if (mapFragment == null) {
-                mapFragment = (SupportMapFragment) getParentFragmentManager().findFragmentById(R.id.map);
-            }
-            if (mapFragment == null) {
-                View mapContainer = view.findViewById(R.id.map);
-                if (mapContainer instanceof FragmentContainerView) {
-                    Fragment child = ((FragmentContainerView) mapContainer).getFragment();
-                    if (child instanceof SupportMapFragment) {
-                        mapFragment = (SupportMapFragment) child;
-                    }
-                }
-            }
-            if (mapFragment != null) {
-                mapFragment.getMapAsync(this);
-            }
-        });
+        SupportMapFragment mapFragment = (SupportMapFragment) getChildFragmentManager().findFragmentById(R.id.map);
+        Log.d(TAG, "mapFragment from getChildFragmentManager: " + (mapFragment != null));
+        if (mapFragment != null) {
+            mapFragment.getMapAsync(this);
+        }
 
         loadEntrantLocation();
     }
 
     private void loadEntrantLocation() {
         if (deviceId == null || deviceId.isEmpty()) {
+            Log.w(TAG, "loadEntrantLocation: deviceId null or empty, aborting");
             Toast.makeText(getContext(), "Entrant not specified", Toast.LENGTH_SHORT).show();
             textLocationOf.setText("LOCATION OF: Unknown");
             textLocationAddress.setText("No location available");
             return;
         }
 
+        Log.d(TAG, "loadEntrantLocation: fetching users/" + deviceId);
         db.collection("users")
                 .document(deviceId)
                 .get()
                 .addOnSuccessListener(documentSnapshot -> {
+                    Log.d(TAG, "loadEntrantLocation: Firestore success, exists=" + documentSnapshot.exists());
                     if (!documentSnapshot.exists()) {
+                        Log.w(TAG, "loadEntrantLocation: document does not exist");
                         Toast.makeText(getContext(), "Entrant profile not found", Toast.LENGTH_SHORT).show();
                         textLocationOf.setText("LOCATION OF: Unknown Entrant");
                         textLocationAddress.setText("No location available");
@@ -115,6 +101,7 @@ public class GeolocationFragment extends Fragment implements OnMapReadyCallback 
                     }
 
                     Entrant entrant = documentSnapshot.toObject(Entrant.class);
+                    Log.d(TAG, "loadEntrantLocation: entrant=" + (entrant != null) + " name=" + (entrant != null ? entrant.getFullName() : "n/a") + " address=" + (entrant != null && entrant.getLocationAddress() != null ? "present" : "null") + " lat=" + (entrant != null && entrant.getLatitude() != null ? entrant.getLatitude() : "null") + " lng=" + (entrant != null && entrant.getLongitude() != null ? entrant.getLongitude() : "null"));
 
                     if (entrant != null) {
                         if (entrant.getFullName() != null && !entrant.getFullName().trim().isEmpty()) {
@@ -145,15 +132,18 @@ public class GeolocationFragment extends Fragment implements OnMapReadyCallback 
                     }
                     textLocationAddress.setText(locationAddress);
                     if (hasCoordinates) {
+                        Log.d(TAG, "loadEntrantLocation: using DB coords, calling updateMap");
                         updateMap();
                     } else if (!"No location available".equals(locationAddress)) {
-                        // Address in DB but no lat/lng: geocode to get coordinates for the map
+                        Log.d(TAG, "loadEntrantLocation: no coords, geocoding address: " + locationAddress);
                         geocodeAddressThenUpdateMap(locationAddress);
                     } else {
+                        Log.d(TAG, "loadEntrantLocation: no coords and no address, calling updateMap (no-op)");
                         updateMap();
                     }
                 })
                 .addOnFailureListener(e -> {
+                    Log.e(TAG, "loadEntrantLocation: Firestore failed", e);
                     Toast.makeText(getContext(), "Failed to load entrant location", Toast.LENGTH_SHORT).show();
                     textLocationOf.setText("LOCATION OF: Unknown Entrant");
                     textLocationAddress.setText("No location available");
@@ -166,18 +156,22 @@ public class GeolocationFragment extends Fragment implements OnMapReadyCallback 
      */
     private void geocodeAddressThenUpdateMap(String address) {
         if (getContext() == null || address == null || address.trim().isEmpty()) {
+            Log.d(TAG, "geocodeAddressThenUpdateMap: skip, context or address null/empty");
             updateMap();
             return;
         }
+        Log.d(TAG, "geocodeAddressThenUpdateMap: starting for address=" + address);
         Executors.newSingleThreadExecutor().execute(() -> {
             try {
                 Geocoder geocoder = new Geocoder(requireContext(), Locale.getDefault());
                 List<Address> results = geocoder.getFromLocationName(address.trim(), 1);
+                Log.d(TAG, "geocodeAddressThenUpdateMap: Geocoder returned " + (results != null ? results.size() : 0) + " result(s)");
                 if (results != null && !results.isEmpty()) {
                     Address first = results.get(0);
                     if (first.hasLatitude() && first.hasLongitude()) {
                         double lat = first.getLatitude();
                         double lng = first.getLongitude();
+                        Log.d(TAG, "geocodeAddressThenUpdateMap: got lat=" + lat + " lng=" + lng);
                         if (getActivity() != null) {
                             getActivity().runOnUiThread(() -> {
                                 latitude = lat;
@@ -186,10 +180,12 @@ public class GeolocationFragment extends Fragment implements OnMapReadyCallback 
                             });
                             return;
                         }
+                    } else {
+                        Log.d(TAG, "geocodeAddressThenUpdateMap: first result has no lat/lng");
                     }
                 }
             } catch (Exception e) {
-                // Geocoder failed (no network, not present, etc.)
+                Log.e(TAG, "geocodeAddressThenUpdateMap: exception", e);
             }
             if (getActivity() != null) {
                 getActivity().runOnUiThread(this::updateMap);
@@ -199,13 +195,14 @@ public class GeolocationFragment extends Fragment implements OnMapReadyCallback 
 
     private void updateMap() {
         if (mMap == null) {
+            Log.d(TAG, "updateMap: mMap is null, skipping");
             return;
         }
-
         if (latitude == 0.0 && longitude == 0.0) {
+            Log.d(TAG, "updateMap: lat/lng both 0, skipping marker");
             return;
         }
-
+        Log.d(TAG, "updateMap: setting marker at " + latitude + "," + longitude);
         LatLng entrantLocation = new LatLng(latitude, longitude);
         mMap.clear();
         mMap.addMarker(new MarkerOptions()
@@ -216,6 +213,7 @@ public class GeolocationFragment extends Fragment implements OnMapReadyCallback 
 
     @Override
     public void onMapReady(@NonNull GoogleMap googleMap) {
+        Log.d(TAG, "onMapReady: map ready");
         mMap = googleMap;
         updateMap();
     }
