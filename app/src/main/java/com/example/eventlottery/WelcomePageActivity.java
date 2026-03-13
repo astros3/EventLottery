@@ -43,8 +43,7 @@ public class WelcomePageActivity extends AppCompatActivity {
         // Entrant/User
         userbutton.setOnClickListener(v -> {
 
-            String deviceId = DeviceIdManager.getDeviceId(this);
-            FirebaseFirestore db = FirebaseFirestore.getInstance();
+
 
             db.collection("users")
                     .document(deviceId)
@@ -75,8 +74,7 @@ public class WelcomePageActivity extends AppCompatActivity {
         // Organizer
         organizerbutton.setOnClickListener(v -> {
 
-            String deviceId = DeviceIdManager.getDeviceId(this);
-            FirebaseFirestore db = FirebaseFirestore.getInstance();
+
 
             db.collection("organizers")
                     .document(deviceId)

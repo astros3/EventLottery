@@ -68,7 +68,6 @@ public class AdminEventControlScreenActivity extends AppCompatActivity {
         setContentView(R.layout.admin_event_control_screen);
         backbutton = findViewById(R.id.back_button);
 
-        admineventfilterbutton = findViewById(R.id.admin_event_filter_button);
         admineventsearchinputbar = findViewById(R.id.admin_event_search_inputbar);
         searchbutton = findViewById(R.id.search_button);
         eventshistory = findViewById(R.id.Events_history);
@@ -139,13 +138,7 @@ public class AdminEventControlScreenActivity extends AppCompatActivity {
             finish();
         });
 
-        //when filtering button is clicked it will navigate to filtering screen (optional; view may be absent in layout)
-        if (admineventfilterbutton != null) {
-            admineventfilterbutton.setOnClickListener(v -> {
-                //Intent intent = new Intent(EntrantMainScreenActivity.this, //destination.class);
-                //startActivity(intent);
-            });
-        }
+
 
         //when search button is clicked search event by title
         if (searchbutton != null) {
