@@ -19,17 +19,26 @@ import androidx.navigation.NavController;
 import androidx.navigation.Navigation;
 
 import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.Map;
 
 public class WaitingEntryAdapter extends ArrayAdapter<WaitingListEntry> {
 
     private final FragmentActivity activity;
     private final ArrayList<WaitingListEntry> entries;
+    /** Map from entrant deviceId to display name (from users collection). */
+    private Map<String, String> deviceIdToName = new HashMap<>();
 
     public WaitingEntryAdapter(@NonNull FragmentActivity activity,
                                @NonNull ArrayList<WaitingListEntry> entries) {
         super(activity, 0, entries);
         this.activity = activity;
         this.entries = entries;
+    }
+
+    /** Sets the display names for entrants (deviceId -> name). Call after loading from users collection. */
+    public void setDeviceIdToName(@NonNull Map<String, String> deviceIdToName) {
+        this.deviceIdToName = deviceIdToName;
     }
 
     @NonNull
@@ -47,7 +56,10 @@ public class WaitingEntryAdapter extends ArrayAdapter<WaitingListEntry> {
         ImageView buttonLocation = view.findViewById(R.id.buttonLocation);
 
         String deviceId = entry.getDeviceId();
-        textEntrantName.setText(deviceId);
+        String displayName = deviceIdToName != null && deviceIdToName.containsKey(deviceId)
+                ? deviceIdToName.get(deviceId)
+                : null;
+        textEntrantName.setText(displayName != null && !displayName.isEmpty() ? displayName : (deviceId != null ? deviceId : "Unknown Entrant"));
 
         buttonLocation.setOnClickListener(v -> {
             Bundle bundle = new Bundle();
