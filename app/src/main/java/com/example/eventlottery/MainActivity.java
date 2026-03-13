@@ -24,7 +24,6 @@ public class MainActivity extends AppCompatActivity {
             registerForActivityResult(new ScanContract(), result -> {
                 if (result.getContents() != null) {
                     String scannedValue = result.getContents().trim();
-
                     if (scannedValue.contains("/")) {
                         scannedValue = scannedValue.substring(scannedValue.lastIndexOf("/") + 1);
                     }
