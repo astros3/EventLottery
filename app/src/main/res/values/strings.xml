@@ -76,6 +76,13 @@
     <string name="save_changes">Save Changes</string>
     <string name="organizer_profile_saved">Profile saved</string>
 
+    <!-- Entrant profile: delete account -->
+    <string name="delete_my_profile">Delete my profile</string>
+    <string name="delete_profile_title">Delete profile</string>
+    <string name="delete_profile_message">Are you sure you want to delete your profile? You will be removed from all event waiting lists and will need to register again to use the app. This cannot be undone.</string>
+    <string name="profile_deleted">Your profile has been deleted.</string>
+    <string name="delete_profile_failed">Could not delete profile. Please try again.</string>
+
     <string name="qr_scan_hint">Scan this QR code to view event details and join the waiting list</string>
     <string name="back">Back</string>
 
