@@ -1,6 +1,11 @@
 <resources>
     <string name="delete_event">Delete Event</string>
     <string name="final_list">Final List</string>
+    <string name="export_csv">Export CSV</string>
+    <string name="export_final_list_csv">Export final list (CSV)</string>
+    <string name="export_csv_success">CSV exported. Share or save the file.</string>
+    <string name="export_csv_no_entrants">No entrants to export.</string>
+    <string name="export_csv_failed">Could not export CSV.</string>
     <string name="notifications">Notifications</string>
     <string name="cancelled_entrants">Cancelled Entrants</string>
     <string name="selected_entrants">Selected Entrants</string>
