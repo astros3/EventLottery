@@ -24,7 +24,6 @@ public class MainActivity extends AppCompatActivity {
             registerForActivityResult(new ScanContract(), result -> {
                 if (result.getContents() != null) {
                     String scannedValue = result.getContents().trim();
-
                     if (scannedValue.contains("/")) {
                         scannedValue = scannedValue.substring(scannedValue.lastIndexOf("/") + 1);
                     }
@@ -39,9 +38,6 @@ public class MainActivity extends AppCompatActivity {
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-
-        String deviceId = DeviceIdManager.getDeviceId(this);
-        Log.d("DEVICE_ID", deviceId);
 
         EdgeToEdge.enable(this);
         setContentView(R.layout.activity_main);
