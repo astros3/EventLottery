@@ -19,6 +19,19 @@ public class NotificationHelper {
     /** Notification type for when an entrant loses the lottery (US 01.04.02). */
     public static final String TYPE_LOTTERY_LOST = "LOTTERY_LOST";
 
+    /** Title/body for the “you won the lottery” / sign-up invitation (organizer + automatic draw). */
+    public static final String LOTTERY_WIN_TITLE = "You've been selected! 🎉";
+    public static final String LOTTERY_WIN_MESSAGE =
+            "Congratulations! You were chosen from the waiting list. Open the event to accept or decline your spot.";
+
+    /**
+     * Sends the standard lottery-win notification (chosen entrants should sign up / respond).
+     * Same payload as after a lottery draw; organizer may resend from Selected Entrants.
+     */
+    public static void sendLotteryWinNotification(FirebaseFirestore db, String deviceId, String eventId) {
+        sendNotification(db, deviceId, TYPE_LOTTERY_WON, LOTTERY_WIN_TITLE, LOTTERY_WIN_MESSAGE, eventId);
+    }
+
     /**
      * Sends a notification to a specific entrant, but only if they have
      * notifications enabled (US 01.04.03).
