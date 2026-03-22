@@ -138,14 +138,8 @@ public class LotteryDraw extends Fragment {
 
                                 // US 01.04.01 — notify winners
                                 for (WaitingListEntry entry : selectedEntries) {
-                                    NotificationHelper.sendNotification(
-                                            db,
-                                            entry.getDeviceId(),
-                                            NotificationHelper.TYPE_LOTTERY_WON,
-                                            "You've been selected! 🎉",
-                                            "Congratulations! You were chosen from the waiting list. Open the event to accept or decline your spot.",
-                                            eventId
-                                    );
+                                    NotificationHelper.sendLotteryWinNotification(
+                                            db, entry.getDeviceId(), eventId);
                                 }
 
                                 // US 01.04.02 — notify losers (pending but not selected)
