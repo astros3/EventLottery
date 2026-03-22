@@ -9,8 +9,12 @@ import android.location.Geocoder;
 import android.os.Bundle;
 import android.util.Log;
 import android.view.View;
+import android.widget.ArrayAdapter;
+import android.widget.Button;
+import android.widget.EditText;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
+import android.widget.ListView;
 import android.widget.TextView;
 import android.widget.Toast;
 
@@ -30,9 +34,12 @@ import com.google.firebase.firestore.DocumentSnapshot;
 import com.google.firebase.firestore.FirebaseFirestore;
 
 import java.text.SimpleDateFormat;
+import java.util.ArrayList;
 import java.util.Date;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Locale;
+import java.util.Map;
 
 /**
  * Event details and join/leave waiting list (US 01.01.01, 01.01.02, 01.06.02). Enforces
@@ -61,6 +68,9 @@ public class EventDetailsActivity extends AppCompatActivity {
     private TextView titleView, organizerView, dateView, statusView, descriptionView, criteriaView, waitingListCountView;
     private ImageView posterView;
     private MaterialButton joinLeaveButton;
+    private ListView commentsListView;
+    private EditText commentInput;
+    private Button postCommentButton;
     private LinearLayout invitationButtonsContainer;
     private MaterialButton acceptInvitationButton;
     private MaterialButton declineInvitationButton;
@@ -122,6 +132,10 @@ public class EventDetailsActivity extends AppCompatActivity {
         criteriaView = findViewById(R.id.event_selection_criteria);
         waitingListCountView = findViewById(R.id.event_waiting_list_count);
         posterView = findViewById(R.id.event_poster);
+        commentsListView = findViewById(R.id.listComments);
+        commentInput = findViewById(R.id.editComment);
+        postCommentButton = findViewById(R.id.buttonPostComment);
+        postCommentButton.setOnClickListener(v -> postComment());
         joinLeaveButton = findViewById(R.id.btn_join_leave);
         joinLeaveButton.setOnClickListener(v -> onJoinLeaveClicked());
         invitationButtonsContainer = findViewById(R.id.invitation_buttons_container);
@@ -171,6 +185,7 @@ public class EventDetailsActivity extends AppCompatActivity {
                 });
 
         refreshWaitingListCount();
+        loadComments();
     }
 
     private void refreshWaitingListCount() {
@@ -550,5 +565,59 @@ public class EventDetailsActivity extends AppCompatActivity {
                 })
                 .addOnFailureListener(e ->
                         Toast.makeText(this, "Failed to leave", Toast.LENGTH_SHORT).show());
+    }
+
+    //fetches and shows comments
+    private void loadComments() {
+        if (eventId == null || eventId.isEmpty()) return;
+
+        db.collection("events")
+                .document(eventId)
+                .collection("comments")
+                .get()
+                .addOnSuccessListener(querySnapshot -> {
+                    ArrayList<String> comments = new ArrayList<>();
+
+                    for (DocumentSnapshot doc : querySnapshot.getDocuments()) {
+                        String text = doc.getString("text");
+                        if (text != null) {
+                            comments.add(text);
+                        }
+                    }
+
+                    ArrayAdapter<String> adapter =
+                            new ArrayAdapter<>(this, android.R.layout.simple_list_item_1, comments);
+
+                    commentsListView.setAdapter(adapter);
+                })
+                .addOnFailureListener(e ->
+                        Toast.makeText(this, "Failed to load comments", Toast.LENGTH_SHORT).show());
+    }
+
+    //gets text from input, saves to events/{eventId}/comments, refreshes comments after posting
+    private void postComment() {
+        String text = commentInput.getText().toString().trim();
+
+        if (text.isEmpty()) {
+            Toast.makeText(this, "Enter a comment", Toast.LENGTH_SHORT).show();
+            return;
+        }
+
+        Map<String, Object> comment = new HashMap<>();
+        comment.put("text", text);
+        comment.put("deviceId", deviceId);
+        comment.put("timestamp", System.currentTimeMillis());
+
+        db.collection("events")
+                .document(eventId)
+                .collection("comments")
+                .add(comment)
+                .addOnSuccessListener(docRef -> {
+                    Toast.makeText(this, "Comment posted", Toast.LENGTH_SHORT).show();
+                    commentInput.setText("");
+                    loadComments(); // refresh list
+                })
+                .addOnFailureListener(e ->
+                        Toast.makeText(this, "Failed to post comment", Toast.LENGTH_SHORT).show());
     }
 }
