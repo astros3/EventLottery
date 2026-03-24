@@ -37,8 +37,9 @@ import java.util.Map;
 /**
  * Entrant home: lists all events from Firestore, shows pending/accepted counts for current
  * user. QR scan opens EventDetailsActivity. Bell opens EntrantNotificationsActivity.
+ * Filter opens search + filters (US 01.01.04–01.01.06).
  */
-public class EntrantMainScreenActivity extends AppCompatActivity {
+public class EntrantMainScreenActivity extends AppCompatActivity implements EventFilterDialogFragment.Listener {
 
     //scanner code
     private final ActivityResultLauncher<ScanOptions> qrScanner =
@@ -58,6 +59,9 @@ public class EntrantMainScreenActivity extends AppCompatActivity {
             });
 
     private ArrayList<Event> eventlist;
+    /** Full list from Firestore; {@link #eventlist} is the filtered view. */
+    private final ArrayList<Event> allEvents = new ArrayList<>();
+    private EventFilterCriteria eventFilterCriteria = EventFilterCriteria.empty();
     private ArrayList<String[]> userstatuseventlist;
     private EntrantMainScreenAdapter eventadapter;
     //xml variables
@@ -138,6 +142,7 @@ public class EntrantMainScreenActivity extends AppCompatActivity {
                                 listisempty();
                                 return;
                             }
+                            allEvents.clear();
                             for(QueryDocumentSnapshot eachevent : alleventsdata) {
                                 String thecurrenteventid = eachevent.getId();
                                 String thecurrenteventtitle = eachevent.getString("title");
@@ -158,11 +163,10 @@ public class EntrantMainScreenActivity extends AppCompatActivity {
                                 Organizer thecurrentorganizer = new Organizer(thecurrenteventorganizerid, thecurrenteventorganizername);
                                 Event thecurrentevent = new Event(thecurrenteventid, thecurrenteventtitle, thecurrenteventdescription, thecurrenteventlocation, thecurrenteventorganizerid, thecurrenteventorganizername, thecurrenteventcapacity, thecurrentwaitinglistlimit, theregistrationstart, theregistrationend, thecurrenteventdateandtime, thecurrentgeolocationrequired, thecurrentprice);
                                 thecurrentevent.setPosterUri(thecurrenteventposteruri);
-                                eventlist.add(thecurrentevent);
+                                allEvents.add(thecurrentevent);
                             }
 
-                            eventadapter.notifyDataSetChanged();
-                            totalnumber.setText(String.valueOf(eventlist.size()));
+                            applyEventFilterToList();
                         }
                         else{
                             Log.d("EntrantMainScreen", "Error getting documents: ", task.getException());
@@ -234,12 +238,9 @@ public class EntrantMainScreenActivity extends AppCompatActivity {
         notificationbellbutton.setOnClickListener(v ->
                 startActivity(new Intent(EntrantMainScreenActivity.this, EntrantNotificationsActivity.class)));
 
-        //navigates to filtering activity
-        //!!!!awaiting!!!!
-        filtertext.setOnClickListener(v -> {
-            //Intent intent = new Intent(EntrantMainScreenActivity.this, //destination.class);
-            //startActivity(intent);
-        });
+        findViewById(R.id.helperrow).setOnClickListener(v -> openEventFilterDialog());
+        filtertext.setOnClickListener(v -> openEventFilterDialog());
+        findViewById(R.id.filterimage).setOnClickListener(v -> openEventFilterDialog());
 
         //launch QR scanner
         navigationscanbutton.setOnClickListener(v -> {
@@ -268,8 +269,36 @@ public class EntrantMainScreenActivity extends AppCompatActivity {
      * it shows 0 for total events
      */
     public void listisempty(){
+        allEvents.clear();
+        eventlist.clear();
         eventadapter.notifyDataSetChanged();
         totalnumber.setText("0");
+    }
+
+    private void openEventFilterDialog() {
+        EventFilterDialogFragment.newInstance(eventFilterCriteria)
+                .show(getSupportFragmentManager(), EventFilterDialogFragment.TAG);
+    }
+
+    private void applyEventFilterToList() {
+        EventFilterUtils.apply(db, allEvents, eventFilterCriteria, filtered -> runOnUiThread(() -> {
+            eventlist.clear();
+            eventlist.addAll(filtered);
+            totalnumber.setText(String.valueOf(eventlist.size()));
+            eventadapter.notifyDataSetChanged();
+        }));
+    }
+
+    @Override
+    public void onFilterApplied(EventFilterCriteria criteria) {
+        eventFilterCriteria = criteria != null ? criteria : EventFilterCriteria.empty();
+        applyEventFilterToList();
+    }
+
+    @Override
+    public void onFilterCleared() {
+        eventFilterCriteria = EventFilterCriteria.empty();
+        applyEventFilterToList();
     }
 
     /**
@@ -313,11 +342,11 @@ public class EntrantMainScreenActivity extends AppCompatActivity {
 
     /** Re-fetches current user's status per event so invitation count and list stay in sync (e.g. after accept/decline). */
     private void refreshUserStatuses() {
-        if (db == null || currentdeviceid == null || eventlist == null || eventlist.isEmpty()) return;
+        if (db == null || currentdeviceid == null || allEvents.isEmpty()) return;
         userstatuseventlist.clear();
-        int totaleventcount = eventlist.size();
+        int totaleventcount = allEvents.size();
         final int[] done = {0};
-        for (Event event : eventlist) {
+        for (Event event : allEvents) {
             String eventid = event.getEventId();
             db.collection("events").document(eventid)
                     .collection("waitingList").document(currentdeviceid)
