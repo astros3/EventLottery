@@ -1,6 +1,11 @@
 <resources>
     <string name="delete_event">Delete Event</string>
     <string name="final_list">Final List</string>
+    <string name="export_csv">Export CSV</string>
+    <string name="export_final_list_csv">Export final list (CSV)</string>
+    <string name="export_csv_success">CSV exported. Share or save the file.</string>
+    <string name="export_csv_no_entrants">No entrants to export.</string>
+    <string name="export_csv_failed">Could not export CSV.</string>
     <string name="notifications">Notifications</string>
     <string name="notification_empty">No notifications yet</string>
     <string name="notification_load_failed">Could not load notifications</string>
@@ -15,6 +20,21 @@
     <string name="view_qr_code">View QR Code</string>
     <string name="update_event_information">Update Event Information</string>
     <string name="app_name">EventLottery</string>
+
+    <!-- Entrant search & filter (US 01.01.04, 01.01.05, 01.01.06) -->
+    <string name="filter_dialog_title">Search &amp; filter events</string>
+    <string name="filter_keyword_hint">Keyword (title, description, location)</string>
+    <string name="filter_event_date_range">Your Availability</string>
+    <string name="filter_date_from">From</string>
+    <string name="filter_date_to">To</string>
+    <string name="filter_date_any">Any</string>
+    <string name="filter_registration_open_only">Registration open now</string>
+    <string name="filter_min_capacity_hint">Minimum event capacity (optional)</string>
+    <string name="filter_hide_full_waiting">Hide events with full waiting list</string>
+    <string name="filter_apply">Apply</string>
+    <string name="filter_clear">Clear</string>
+    <string name="filter_invalid_capacity">Enter a valid number for capacity</string>
+    <string name="filter_invalid_date_range">“From” date must be before or equal to “To” date</string>
 
     <!-- Event Details (US 01.01.01, 01.01.02, 01.06.02) -->
     <string name="event_details">Event Details</string>
@@ -36,7 +56,9 @@
     <string name="event_name_hint">Enter event name</string>
     <string name="event_description">Event Description</string>
     <string name="event_description_hint">Enter event description</string>
-    <string name="event_image">Event Image</string>
+    <string name="event_image">Event poster</string>
+    <string name="event_poster_tap_hint">Tap to add or change poster (shown to entrants)</string>
+    <string name="remove_poster">Remove poster</string>
     <string name="event_type">Event Type</string>
     <string name="event_location">Event Location</string>
     <string name="event_location_hint">Tap to search and select a location</string>
@@ -78,6 +100,13 @@
     <string name="phone">Phone</string>
     <string name="save_changes">Save Changes</string>
     <string name="organizer_profile_saved">Profile saved</string>
+
+    <!-- Entrant profile: delete account -->
+    <string name="delete_my_profile">Delete my profile</string>
+    <string name="delete_profile_title">Delete profile</string>
+    <string name="delete_profile_message">Are you sure you want to delete your profile? You will be removed from all event waiting lists and will need to register again to use the app. This cannot be undone.</string>
+    <string name="profile_deleted">Your profile has been deleted.</string>
+    <string name="delete_profile_failed">Could not delete profile. Please try again.</string>
 
     <string name="qr_scan_hint">Scan this QR code to view event details and join the waiting list</string>
     <string name="back">Back</string>
