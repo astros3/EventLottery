@@ -71,7 +71,7 @@ public class FinalList extends Fragment {
                         .navigate(R.id.Final_list_to_OrganizerNavigationFragment));
 
         view.findViewById(R.id.buttonExportCsv).setOnClickListener(v -> exportFinalListCsv());
-        view.findViewById(R.id.buttonNotifyCancelled).setOnClickListener(v -> notifyCancelledEntrants());
+       // view.findViewById(R.id.buttonNotifyCancelled).setOnClickListener(v -> notifyCancelledEntrants());
 
         loadAcceptedEntries();
     }
