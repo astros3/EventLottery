@@ -290,6 +290,13 @@ public class EventDetailsActivity extends AppCompatActivity {
     }
 
     private void updateStatusAndButton() {
+        if (organizermode) {
+            joinLeaveButton.setVisibility(View.GONE);
+            if (invitationButtonsContainer != null)
+                invitationButtonsContainer.setVisibility(View.GONE);
+            statusView.setVisibility(View.GONE);
+            return;
+        }
         if (!onWaitingList) {
             if (loadedEventIsPrivate) {
                 // Entrant has no waiting list entry on a private event — invitation only (US 01.05.06)
