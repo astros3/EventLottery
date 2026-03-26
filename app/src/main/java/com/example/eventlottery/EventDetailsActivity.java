@@ -64,6 +64,8 @@ public class EventDetailsActivity extends AppCompatActivity {
     private boolean onWaitingList;
     private String waitingListStatus;
     private Event pendingJoinEvent;
+    /** Cached from the loaded event; used to gate entrant join button on private events. */
+    private boolean loadedEventIsPrivate = false;
 
     private TextView titleView, organizerView, dateView, statusView,
             descriptionView, criteriaView, waitingListCountView;
@@ -75,6 +77,7 @@ public class EventDetailsActivity extends AppCompatActivity {
     private LinearLayout invitationButtonsContainer;
     private MaterialButton acceptInvitationButton;
     private MaterialButton declineInvitationButton;
+    private MaterialButton inviteEntrantsButton;
     private boolean organizermode = false;
     private final ArrayList<String> comments = new ArrayList<>();
     private final ArrayList<String> commentIds = new ArrayList<>();
@@ -157,6 +160,8 @@ public class EventDetailsActivity extends AppCompatActivity {
         declineInvitationButton.setOnClickListener(v ->
                 updateInvitationStatus(WaitingListEntry.Status.DECLINED));
 
+        inviteEntrantsButton = findViewById(R.id.btn_invite_entrants);
+
         commentsListView.setOnItemClickListener((parent, view, position, id) -> {
             if (organizermode) {
                 String selectedCommentId = commentIds.get(position);
@@ -197,6 +202,7 @@ public class EventDetailsActivity extends AppCompatActivity {
         Event event = eventDoc.toObject(Event.class);
         if (event != null) {
             event.setEventId(eventDoc.getId());
+            loadedEventIsPrivate = event.isPrivate();
             bindEvent(event);
         }
 
@@ -265,6 +271,17 @@ public class EventDetailsActivity extends AppCompatActivity {
         } else {
             posterView.setImageDrawable(null);
         }
+
+        // Show "Invite Entrants" only for the organizer viewing their own private event (US 02.01.03)
+        boolean viewAsEntrant = getIntent().getBooleanExtra(EXTRA_VIEW_AS_ENTRANT, true);
+        if (!viewAsEntrant && event.isPrivate()
+                && DeviceIdManager.getDeviceId(this).equals(event.getOrganizerId())) {
+            inviteEntrantsButton.setVisibility(View.VISIBLE);
+            inviteEntrantsButton.setOnClickListener(v ->
+                    startActivity(OrganizerInviteEntrantActivity.newIntent(this, eventId)));
+        } else {
+            inviteEntrantsButton.setVisibility(View.GONE);
+        }
     }
 
     private static String formatDate(long millis) {
@@ -274,11 +291,19 @@ public class EventDetailsActivity extends AppCompatActivity {
 
     private void updateStatusAndButton() {
         if (!onWaitingList) {
-            statusView.setText(R.string.status_not_joined);
-            joinLeaveButton.setVisibility(View.VISIBLE);
-            if (invitationButtonsContainer != null)
-                invitationButtonsContainer.setVisibility(View.GONE);
-            joinLeaveButton.setText(R.string.request_to_join);
+            if (loadedEventIsPrivate) {
+                // Entrant has no waiting list entry on a private event — invitation only (US 01.05.06)
+                statusView.setText("Private Event — Invitation Only 🔒");
+                joinLeaveButton.setVisibility(View.GONE);
+                if (invitationButtonsContainer != null)
+                    invitationButtonsContainer.setVisibility(View.GONE);
+            } else {
+                statusView.setText(R.string.status_not_joined);
+                joinLeaveButton.setVisibility(View.VISIBLE);
+                if (invitationButtonsContainer != null)
+                    invitationButtonsContainer.setVisibility(View.GONE);
+                joinLeaveButton.setText(R.string.request_to_join);
+            }
             return;
         }
 

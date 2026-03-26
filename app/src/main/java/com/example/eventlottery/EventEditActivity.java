@@ -465,7 +465,10 @@ public class EventEditActivity extends AppCompatActivity {
         if (isCreate) {
             eventId = db.collection("events").document().getId();
             event.setEventId(eventId);
-            event.setPromoCode(QRCodeService.generatePromoCode());
+            // Private events have no QR code and no promo code (US 02.01.02)
+            if (!event.isPrivate()) {
+                event.setPromoCode(QRCodeService.generatePromoCode());
+            }
         }
 
         if (selectedPosterUri != null) {
