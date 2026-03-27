@@ -658,6 +658,7 @@ public class EventDetailsActivity extends AppCompatActivity {
                         Toast.makeText(this, "Failed to leave", Toast.LENGTH_SHORT).show());
     }
 
+    //fetches and shows comments
     private void loadComments() {
         if (eventId == null || eventId.isEmpty()) return;
 
@@ -666,8 +667,11 @@ public class EventDetailsActivity extends AppCompatActivity {
                 .collection("comments")
                 .get()
                 .addOnSuccessListener(querySnapshot -> {
+                    //ArrayList<String> comments = new ArrayList<>();
+
                     comments.clear();
                     commentIds.clear();
+
                     for (DocumentSnapshot doc : querySnapshot.getDocuments()) {
                         String text = doc.getString("text");
                         if (text != null) {
@@ -676,6 +680,11 @@ public class EventDetailsActivity extends AppCompatActivity {
                         }
                     }
                     commentsAdapter.notifyDataSetChanged();
+                    //ArrayAdapter<String> adapter =
+                            //new ArrayAdapter<>(this, android.R.layout.simple_list_item_1, comments);
+
+
+                    //commentsListView.setAdapter(adapter);
                 })
                 .addOnFailureListener(e ->
                         Toast.makeText(this, "Failed to load comments",
@@ -721,5 +730,13 @@ public class EventDetailsActivity extends AppCompatActivity {
                 .addOnFailureListener(e ->
                         Toast.makeText(this, "Failed to delete comment",
                                 Toast.LENGTH_SHORT).show());
+    }
+
+    public boolean isLoadedEventIsPrivate() {
+        return loadedEventIsPrivate;
+    }
+
+    public void setLoadedEventIsPrivate(boolean loadedEventIsPrivate) {
+        this.loadedEventIsPrivate = loadedEventIsPrivate;
     }
 }

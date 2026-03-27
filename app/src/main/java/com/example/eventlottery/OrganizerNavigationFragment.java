@@ -82,7 +82,6 @@ public class OrganizerNavigationFragment extends Fragment {
 
         // View Geolocation — event venue from Update Event Information (Firestore)
         view.findViewById(R.id.buttonGeo).setOnClickListener(v -> {
-            String eventId = EventEditActivity.getCurrentEventId(requireContext());
             if (eventId == null || eventId.isEmpty()) {
                 Toast.makeText(requireContext(), "Create an event first", Toast.LENGTH_SHORT).show();
                 return;

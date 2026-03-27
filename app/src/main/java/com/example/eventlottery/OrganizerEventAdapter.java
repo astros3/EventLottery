@@ -150,7 +150,8 @@ public class OrganizerEventAdapter extends RecyclerView.Adapter<OrganizerEventAd
         db.collection("users").document(entrantDeviceId)
                 .collection("notifications").add(notif)
                 .addOnSuccessListener(docRef -> {
-                    Toast.makeText(this, "Invitation sent to Entrant!", Toast.LENGTH_SHORT).show();
+                    Toast.makeText(docRef.getFirestore().getApp().getApplicationContext(),
+                            "Invitation sent to Entrant!", Toast.LENGTH_SHORT).show();
                 });
     }
 }
