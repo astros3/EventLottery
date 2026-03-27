@@ -1,5 +1,12 @@
 package com.example.eventlottery;
 
+
+import android.app.NotificationChannel;
+import android.app.NotificationManager;
+import android.os.Build;
+import androidx.core.app.NotificationCompat;
+import com.google.firebase.firestore.DocumentChange;
+import com.google.firebase.firestore.FirebaseFirestore;
 import android.Manifest;
 import android.content.Intent;
 import android.content.pm.PackageManager;
@@ -19,6 +26,14 @@ import androidx.appcompat.app.AppCompatActivity;
 import androidx.appcompat.widget.Toolbar;
 import androidx.core.app.ActivityCompat;
 
+import com.google.firebase.firestore.DocumentChange;
+
+import androidx.annotation.NonNull;
+
+import androidx.activity.result.ActivityResultLauncher;
+
+import com.journeyapps.barcodescanner.ScanContract;
+import com.journeyapps.barcodescanner.ScanOptions;
 import android.location.Location;
 
 import com.google.android.gms.location.FusedLocationProviderClient;
@@ -34,7 +49,9 @@ import com.journeyapps.barcodescanner.ScanOptions;
 
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Map;
+import java.util.Set;
 
 /**
  * Entrant home: lists events from Firestore with optional filters (keyword, type, distance,
@@ -81,6 +98,8 @@ public class EntrantMainScreenActivity extends AppCompatActivity {
     private FusedLocationProviderClient fusedLocationClient;
     private Double lastUserLat;
     private Double lastUserLng;
+    /** Event IDs where the current user has any waiting list entry (used to reveal private events). */
+    private final Set<String> userWaitingListEventIds = new HashSet<>();
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -197,19 +216,26 @@ public class EntrantMainScreenActivity extends AppCompatActivity {
     }
 
     /**
-     * @param refetchStatuses true after loading events from Firestore; false when only filter inputs changed.
+     * @param refetchStatuses true after loading events from Firestore; false when only filter
+     *                        inputs changed (statuses already known).
+     *
+     * When refetchStatuses=true we must fetch statuses FIRST because private events are only
+     * visible to this user when they have a waiting list entry.  The filter is then applied
+     * inside {@link #fetchUserStatusesForAllEvents} once the set is ready.
+     * When refetchStatuses=false the set is already populated; apply the filter directly.
      */
     private void runAfterFilterChanged(boolean refetchStatuses) {
-        Runnable afterList = () -> {
-            applyFilterToEventList();
+        Runnable doWork = () -> {
             if (refetchStatuses) {
                 fetchUserStatusesForAllEvents();
+            } else {
+                applyFilterToEventList();
             }
         };
         if (needsDistanceFilter()) {
-            fetchUserLocation(afterList);
+            fetchUserLocation(doWork);
         } else {
-            afterList.run();
+            doWork.run();
         }
     }
 
@@ -259,6 +285,8 @@ public class EntrantMainScreenActivity extends AppCompatActivity {
         boolean hasUserFix = lastUserLat != null && lastUserLng != null;
         eventlist.clear();
         for (Event e : allEvents) {
+            // Private events are only visible to entrants who have a waiting list entry (US 01.05.06)
+            if (e.isPrivate() && !userWaitingListEventIds.contains(e.getEventId())) continue;
             if (EventFilterUtils.matchesForList(e, currentFilter, lastUserLat, lastUserLng, hasUserFix)) {
                 eventlist.add(e);
             }
@@ -290,7 +318,10 @@ public class EntrantMainScreenActivity extends AppCompatActivity {
                     howmanywinforthisuser++;
                 } else if (currenteventstatusforuser.equalsIgnoreCase("pending")) {
                     howmanypendingforthisuser++;
-                } else if (currenteventstatusforuser.equalsIgnoreCase("selected")) {
+                } else if (currenteventstatusforuser.equalsIgnoreCase("selected")
+                        || currenteventstatusforuser.equalsIgnoreCase("invited")) {
+                    // SELECTED = lottery winner awaiting response
+                    // INVITED  = private event invite awaiting response (US 01.05.06)
                     howmanyinvitationsforthisuser++;
                 }
             }
@@ -305,7 +336,9 @@ public class EntrantMainScreenActivity extends AppCompatActivity {
 
     private void fetchUserStatusesForAllEvents() {
         userstatuseventlist.clear();
+        userWaitingListEventIds.clear();
         if (allEvents.isEmpty()) {
+            applyFilterToEventList();
             CountAndCountHowManyPendingAndWin();
             return;
         }
@@ -320,20 +353,74 @@ public class EntrantMainScreenActivity extends AppCompatActivity {
                         if (waitinglistdocument.exists()) {
                             String status = waitinglistdocument.getString("status");
                             userstatuseventlist.add(new String[]{eventid, status});
+                            // Track which events the user has any entry on so private events
+                            // that they were invited to remain visible (US 01.05.06)
+                            userWaitingListEventIds.add(eventid);
                         }
                         done[0]++;
                         if (done[0] == totaleventcount) {
+                            applyFilterToEventList();
                             CountAndCountHowManyPendingAndWin();
                         }
                     })
                     .addOnFailureListener(e -> {
                         done[0]++;
                         if (done[0] == totaleventcount) {
+                            applyFilterToEventList();
                             CountAndCountHowManyPendingAndWin();
                         }
                     });
         }
     }
+
+    private void startInvitationListener() {
+        String myId = DeviceIdManager.getDeviceId(this);
+        FirebaseFirestore db = FirebaseFirestore.getInstance();
+
+        // Listen only for unread invitations for THIS user
+        db.collection("users").document(myId).collection("notifications")
+                .whereEqualTo("type", "INVITATION")
+                .whereEqualTo("read", false)
+                .addSnapshotListener((snapshots, e) -> {
+                    if (e != null) return;
+
+                    if (snapshots != null && !snapshots.isEmpty()) {
+                        for (DocumentChange dc : snapshots.getDocumentChanges()) {
+                            if (dc.getType() == DocumentChange.Type.ADDED) {
+                                // Trigger the actual phone alert
+                                String title = dc.getDocument().getString("title");
+                                String msg = dc.getDocument().getString("message");
+
+                                triggerSystemAlert(title, msg);
+                            }
+                        }
+                    }
+                });
+
+    }
+
+    private void triggerSystemAlert(String title, String message) {
+        String channelId = "invite_channel";
+        NotificationManager nm = (NotificationManager) getSystemService(NOTIFICATION_SERVICE);
+
+        // Create the Notification Channel (Required for Android 8.0+)
+        if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.O) {
+            NotificationChannel channel = new NotificationChannel(channelId, "Invitations", NotificationManager.IMPORTANCE_HIGH);
+            nm.createNotificationChannel(channel);
+        }
+
+        // Build the notification
+        NotificationCompat.Builder builder = new NotificationCompat.Builder(this, channelId)
+                .setSmallIcon(R.drawable.ic_invite) // The XML icon we created earlier
+                .setContentTitle(title)
+                .setContentText(message)
+                .setPriority(NotificationCompat.PRIORITY_HIGH)
+                .setAutoCancel(true);
+
+        // Show it
+        nm.notify((int) System.currentTimeMillis(), builder.build());
+    }
+
 
     @Override
     protected void onResume() {

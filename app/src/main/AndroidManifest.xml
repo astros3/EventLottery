@@ -11,6 +11,7 @@
         android:name="android.hardware.camera"
         android:required="false" />
 
+    <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
     <application
         android:allowBackup="true"
         android:dataExtractionRules="@xml/data_extraction_rules"
@@ -88,6 +89,11 @@
             android:name=".OrganizerProfileActivity"
             android:exported="false"
             android:parentActivityName=".MainActivity" />
+
+        <activity
+            android:name=".OrganizerInviteEntrantActivity"
+            android:exported="false"
+            android:parentActivityName=".EventDetailsActivity" />
 
         <provider
             android:name="androidx.core.content.FileProvider"

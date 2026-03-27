@@ -64,7 +64,6 @@ public class EventDetailsActivity extends AppCompatActivity {
     private boolean onWaitingList;
     private String waitingListStatus;
     private Event pendingJoinEvent;
-
     /** Cached from the loaded event; used to gate entrant join button on private events. */
     private boolean loadedEventIsPrivate = false;
 
@@ -293,6 +292,7 @@ public class EventDetailsActivity extends AppCompatActivity {
     private void updateStatusAndButton() {
         if (!onWaitingList) {
             if (loadedEventIsPrivate) {
+                // Entrant has no waiting list entry on a private event — invitation only (US 01.05.06)
                 statusView.setText("Private Event — Invitation Only 🔒");
                 joinLeaveButton.setVisibility(View.GONE);
                 if (invitationButtonsContainer != null)
@@ -333,6 +333,7 @@ public class EventDetailsActivity extends AppCompatActivity {
                 break;
 
             case "INVITED":
+                // US 01.05.06 / 01.05.07 — invited to join private event waiting list
                 statusView.setText("Invited to Private Event 🔒");
                 joinLeaveButton.setVisibility(View.GONE);
                 invitationButtonsContainer.setVisibility(View.VISIBLE);
@@ -381,6 +382,7 @@ public class EventDetailsActivity extends AppCompatActivity {
      * Updates invitation status to ACCEPTED or DECLINED.
      * Handles both lottery selected (SELECTED -> ACCEPTED/DECLINED)
      * and private event invitations (INVITED -> PENDING on accept, DECLINED on decline).
+     * US 01.05.02, 01.05.03, 01.05.07.
      */
     private void updateInvitationStatus(WaitingListEntry.Status newStatus) {
         if (eventId == null || eventId.trim().isEmpty()) {
@@ -410,6 +412,7 @@ public class EventDetailsActivity extends AppCompatActivity {
 
                     String currentStatus = entry.getStatus();
 
+                    // Valid statuses that can be responded to
                     boolean isSelected = WaitingListEntry.Status.SELECTED.name()
                             .equals(currentStatus);
                     boolean isInvited  = WaitingListEntry.Status.INVITED.name()
@@ -421,7 +424,8 @@ public class EventDetailsActivity extends AppCompatActivity {
                         return;
                     }
 
-
+                    // US 01.05.07 — accepting a private invite adds them to
+                    // the waiting list as PENDING
                     String statusToSave;
                     if (isInvited && newStatus == WaitingListEntry.Status.ACCEPTED) {
                         statusToSave = WaitingListEntry.Status.PENDING.name();
@@ -654,6 +658,7 @@ public class EventDetailsActivity extends AppCompatActivity {
                         Toast.makeText(this, "Failed to leave", Toast.LENGTH_SHORT).show());
     }
 
+    //fetches and shows comments
     private void loadComments() {
         if (eventId == null || eventId.isEmpty()) return;
 
@@ -662,8 +667,11 @@ public class EventDetailsActivity extends AppCompatActivity {
                 .collection("comments")
                 .get()
                 .addOnSuccessListener(querySnapshot -> {
+                    //ArrayList<String> comments = new ArrayList<>();
+
                     comments.clear();
                     commentIds.clear();
+
                     for (DocumentSnapshot doc : querySnapshot.getDocuments()) {
                         String text = doc.getString("text");
                         if (text != null) {
@@ -672,6 +680,11 @@ public class EventDetailsActivity extends AppCompatActivity {
                         }
                     }
                     commentsAdapter.notifyDataSetChanged();
+                    //ArrayAdapter<String> adapter =
+                            //new ArrayAdapter<>(this, android.R.layout.simple_list_item_1, comments);
+
+
+                    //commentsListView.setAdapter(adapter);
                 })
                 .addOnFailureListener(e ->
                         Toast.makeText(this, "Failed to load comments",
@@ -717,5 +730,13 @@ public class EventDetailsActivity extends AppCompatActivity {
                 .addOnFailureListener(e ->
                         Toast.makeText(this, "Failed to delete comment",
                                 Toast.LENGTH_SHORT).show());
+    }
+
+    public boolean isLoadedEventIsPrivate() {
+        return loadedEventIsPrivate;
+    }
+
+    public void setLoadedEventIsPrivate(boolean loadedEventIsPrivate) {
+        this.loadedEventIsPrivate = loadedEventIsPrivate;
     }
 }
