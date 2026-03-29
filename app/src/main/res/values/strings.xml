@@ -94,6 +94,10 @@
     <string name="phone">Phone</string>
     <string name="save_changes">Save Changes</string>
     <string name="organizer_profile_saved">Profile saved</string>
+    <string name="admin_profile">Admin Profile</string>
+    <string name="phone_optional">Optional</string>
+    <string name="admin_profile_saved">Profile saved</string>
+    <string name="admin_profile_save_failed">Failed to save profile</string>
 
     <!-- Entrant profile: delete account -->
     <string name="delete_my_profile">Delete my profile</string>
@@ -141,6 +145,9 @@
     <string name="co_organizer_assign_failed">Failed to assign co-organizer</string>
     <string name="co_organizer_remove_failed">Failed to remove co-organizer</string>
     <string name="co_organizer_banner">You are a co-organizer for this event</string>
+    <string name="co_organizer_notification_title">Co-organizer</string>
+    <string name="co_organizer_notification_body">You have been selected as a co-organizer for: %1$s</string>
+    <string name="co_organizer_notification_event_fallback">this event</string>
     <string name="edit_lock_held">This event is currently being edited by another organizer. Try again later.</string>
     <string name="edit_lock_acquire_failed">Could not acquire edit lock. Please try again.</string>
     <string name="search_users_hint">Search by name or email</string>

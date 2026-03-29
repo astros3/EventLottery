@@ -41,6 +41,8 @@ public class CoOrganizerManagementActivity extends AppCompatActivity {
 
     private FirebaseFirestore db;
     private String eventId;
+    /** Cached from event document for assignment notifications. */
+    private String eventTitle = "";
     private String deviceId;
 
     private RecyclerView recyclerView;
@@ -128,6 +130,8 @@ public class CoOrganizerManagementActivity extends AppCompatActivity {
                         finish();
                         return;
                     }
+                    String t = event.getTitle();
+                    eventTitle = (t != null && !t.isEmpty()) ? t : "";
                     currentCoOrganizerIds.clear();
                     currentCoOrganizerIds.addAll(event.getCoOrganizerIds());
                     loadAllUsers();
@@ -199,6 +203,14 @@ public class CoOrganizerManagementActivity extends AppCompatActivity {
                             .delete()
                             .addOnSuccessListener(v -> Log.d(TAG, "Removed from waiting list: " + user.deviceId))
                             .addOnFailureListener(e -> Log.d(TAG, "Not on waiting list or already removed: " + user.deviceId));
+
+                    String displayEventName = eventTitle.isEmpty()
+                            ? getString(R.string.co_organizer_notification_event_fallback)
+                            : eventTitle;
+                    String notifTitle = getString(R.string.co_organizer_notification_title);
+                    String notifBody = getString(R.string.co_organizer_notification_body, displayEventName);
+                    NotificationHelper.sendCoOrganizerAssignedNotification(db, user.deviceId, eventId,
+                            notifTitle, notifBody);
 
                     user.isCoOrganizer = true;
                     currentCoOrganizerIds.add(user.deviceId);

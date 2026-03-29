@@ -155,19 +155,22 @@ public class OrganizerEventAdapter extends RecyclerView.Adapter<OrganizerEventAd
     private void sendInvitationNotification(String entrantDeviceId, String eventId, String eventName) {
         FirebaseFirestore db = FirebaseFirestore.getInstance();
 
-        // Create a data map for the notification
+        final String title = "Co-Organizer Invitation";
+        final String message = "You've been invited to help manage: " + eventName;
+
         Map<String, Object> notif = new HashMap<>();
         notif.put("type", "INVITATION");
-        notif.put("title", "Co-Organizer Invitation");
-        notif.put("message", "You've been invited to help manage: " + eventName);
+        notif.put("title", title);
+        notif.put("message", message);
         notif.put("eventId", eventId);
         notif.put("timestampMillis", System.currentTimeMillis());
         notif.put("read", false);
 
-
         db.collection("users").document(entrantDeviceId)
                 .collection("notifications").add(notif)
                 .addOnSuccessListener(docRef -> {
+                    NotificationHelper.NotificationMAINstorageForAdmin(
+                            db, title, message, eventId, entrantDeviceId);
                     Toast.makeText(docRef.getFirestore().getApp().getApplicationContext(),
                             "Invitation sent to Entrant!", Toast.LENGTH_SHORT).show();
                 });
