@@ -14,7 +14,11 @@ import java.util.Map;
  * Sends win notifications (US 01.04.01), loss notifications (US 01.04.02),
  * private event invite notifications (US 01.05.06), and co-organizer assignment.
  */
+
+
 public class NotificationHelper {
+
+    public static final String TYPE_PRIVATE_INVITE = "PRIVATE_INVITE";
 
     /**
      * Notification type for when an entrant wins the lottery (US 01.04.01).
