@@ -63,9 +63,9 @@ public class OrganizerNavigationFragment extends Fragment {
         });
 
         // Load event to show/hide QR vs Invite button based on isPrivate
-        String eventId = EventEditActivity.getCurrentEventId(requireContext());
-        if (eventId != null && !eventId.isEmpty()) {
-            FirebaseFirestore.getInstance().collection("events").document(eventId).get()
+        String eventId2 = EventEditActivity.getCurrentEventId(requireContext());
+        if (eventId2 != null && !eventId2.isEmpty()) {
+            FirebaseFirestore.getInstance().collection("events").document(eventId2).get()
                     .addOnSuccessListener(doc -> {
                         if (doc == null || !doc.exists()) return;
                         Event event = doc.toObject(Event.class);

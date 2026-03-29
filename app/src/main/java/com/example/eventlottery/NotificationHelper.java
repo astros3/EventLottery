@@ -14,7 +14,11 @@ import java.util.Map;
  * Sends win notifications (US 01.04.01), loss notifications (US 01.04.02),
  * and private event invite notifications (US 01.05.06).
  */
+
+
 public class NotificationHelper {
+
+    public static final String TYPE_PRIVATE_INVITE = "PRIVATE_INVITE";
 
     /**
      * Notification type for when an entrant wins the lottery (US 01.04.01).
@@ -107,15 +111,7 @@ public class NotificationHelper {
                 });
     }
 
-    //reference sendNotification function
-    public static void NotificationMAINstorageForAdmin(FirebaseFirestore db, String title,
-                                                       String message, String eventId, String receiverID) {
 
-        Map<String, Object> NotificationMAINstorage = new HashMap<>();
-
-        NotificationMAINstorage.put("title", title);
-        NotificationMAINstorage.put("message", message);
-        NotificationMAINstorage.put("eventId", eventId);
 
     /**
      * Stores a copy of every notification in a top-level collection for admin log review

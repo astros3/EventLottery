@@ -169,7 +169,7 @@ public class WaitingListFragment extends Fragment {
                     }
 
                     if (sent == 0) {
-                        Toast.makeText(getContext(), "No waiting entrants to notify", Toast.LENGTH_SHORT).show();
+                        Toast.makeText(getContext(), "No entrants in waiting list to notify", Toast.LENGTH_SHORT).show();
                     } else {
                         Toast.makeText(getContext(), "Notified " + sent + " waiting entrants", Toast.LENGTH_SHORT).show();
                     }
