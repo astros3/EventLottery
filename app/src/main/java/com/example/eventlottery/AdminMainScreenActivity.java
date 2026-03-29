@@ -78,10 +78,8 @@ public class AdminMainScreenActivity extends AppCompatActivity {
             startActivity(intent);
         });
 
-        adminProfileButton.setOnClickListener(v -> {
-            //Intent intent = new Intent(AdminMainScreenActivity.this, WelcomePageActivity.class);
-            //startActivity(intent);
-        });
+        adminProfileButton.setOnClickListener(v ->
+                startActivity(new Intent(AdminMainScreenActivity.this, AdminProfileActivity.class)));
 
     }
 }

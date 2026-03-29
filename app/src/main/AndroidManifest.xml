@@ -58,6 +58,11 @@
             android:exported="false" />
 
         <activity
+            android:name=".AdminProfileActivity"
+            android:exported="false"
+            android:parentActivityName=".AdminMainScreenActivity" />
+
+        <activity
             android:name=".AdminEventControlScreenActivity"
             android:exported="false"
             android:parentActivityName=".AdminMainScreenActivity" />
@@ -73,6 +78,11 @@
         <activity
             android:name=".AdminBrowseImagesActivity"
             android:exported="false" />
+
+        <activity
+            android:name=".AdminNotificationLogControlScreenActivity"
+            android:exported="false"
+            android:parentActivityName=".AdminMainScreenActivity" />
 
         <activity
             android:name=".EntrantProfileActivity"

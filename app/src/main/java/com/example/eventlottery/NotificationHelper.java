@@ -12,7 +12,7 @@ import java.util.Map;
  * Notifications are stored in Firestore at users/{deviceId}/notifications.
  * Respects the entrant's notificationsEnabled flag (US 01.04.03).
  * Sends win notifications (US 01.04.01), loss notifications (US 01.04.02),
- * and private event invite notifications (US 01.05.06).
+ * private event invite notifications (US 01.05.06), and co-organizer assignment.
  */
 public class NotificationHelper {
 
@@ -30,6 +30,11 @@ public class NotificationHelper {
      * Notification type for private event invite notifications (US 01.05.06).
      */
     public static final String TYPE_PRIVATE_INVITE = "PRIVATE_INVITE";
+
+    /**
+     * Notification type when a user is assigned as a co-organizer for an event.
+     */
+    public static final String TYPE_CO_ORGANIZER_ASSIGNED = "CO_ORGANIZER_ASSIGNED";
 
     /**
      * Title/body for the “you won the lottery” / sign-up invitation.
@@ -85,6 +90,18 @@ public class NotificationHelper {
                                                      String eventId) {
         sendNotification(db, deviceId, TYPE_PRIVATE_INVITE,
                 PRIVATE_INVITE_TITLE, PRIVATE_INVITE_MESSAGE, eventId);
+    }
+
+    /**
+     * Notifies a user they were selected as co-organizer for an event.
+     * Respects notification opt-out (US 01.04.03).
+     */
+    public static void sendCoOrganizerAssignedNotification(FirebaseFirestore db,
+                                                          String deviceId,
+                                                          String eventId,
+                                                          String title,
+                                                          String message) {
+        sendNotification(db, deviceId, TYPE_CO_ORGANIZER_ASSIGNED, title, message, eventId);
     }
 
     /**
