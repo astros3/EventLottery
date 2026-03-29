@@ -42,6 +42,26 @@ public final class AccessibilityUtils {
         if (view == null) return;
 
         if (view.isClickable() || view.isFocusable()) {
+            ViewGroup.LayoutParams params = view.getLayoutParams();
+            if (params != null) {
+                boolean changed = false;
+                // Only enlarge explicitly-set pixel sizes (positive values).
+                // WRAP_CONTENT (-2) and MATCH_PARENT (-1) are left to the
+                // setMinimumWidth/Height fallback below.
+                if (params.width > 0 && params.width < minPx) {
+                    params.width = minPx;
+                    changed = true;
+                }
+                if (params.height > 0 && params.height < minPx) {
+                    params.height = minPx;
+                    changed = true;
+                }
+                if (changed) {
+                    view.setLayoutParams(params);
+                }
+            }
+            // Fallback for wrap_content views: set a floor the view reports to
+            // its parent during measurement.
             if (view.getMinimumWidth() < minPx) view.setMinimumWidth(minPx);
             if (view.getMinimumHeight() < minPx) view.setMinimumHeight(minPx);
         }
