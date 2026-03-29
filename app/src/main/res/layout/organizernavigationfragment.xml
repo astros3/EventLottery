@@ -60,6 +60,24 @@
                 android:backgroundTint="@color/black"
                 android:textColor="#FFFFFF"/>
 
+            <!-- Visible only to primary organizer (not co-organizers) -->
+            <Button
+                android:id="@+id/buttonManageCoOrganizers"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="@string/manage_co_organizers"
+                android:backgroundTint="#1565C0"
+                android:textColor="#FFFFFF"
+                android:visibility="gone"/>
+
+            <Button
+                android:id="@+id/buttonComments"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="@string/comments"
+                android:backgroundTint="@color/black"
+                android:textColor="#FFFFFF"/>
+
             <!-- Private events only (US 02.01.03) -->
             <Button
                 android:id="@+id/buttonInviteEntrants"

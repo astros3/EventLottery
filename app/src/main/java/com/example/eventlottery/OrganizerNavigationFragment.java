@@ -28,6 +28,8 @@ public class OrganizerNavigationFragment extends Fragment {
     public void onViewCreated(@NonNull View view, @Nullable Bundle savedInstanceState) {
         super.onViewCreated(view, savedInstanceState);
 
+        String deviceId = DeviceIdManager.getDeviceId(requireContext());
+
         view.findViewById(R.id.btn_back).setOnClickListener(v -> {
             androidx.navigation.NavController nav = NavHostFragment.findNavController(OrganizerNavigationFragment.this);
             nav.popBackStack(R.id.OrganizerDashboardFragment, false);
@@ -39,8 +41,32 @@ public class OrganizerNavigationFragment extends Fragment {
             startActivity(EventEditActivity.newIntent(requireContext(), eventId));
         });
 
+        // View event comments and post new ones as organizer
+        view.findViewById(R.id.buttonComments).setOnClickListener(v -> {
+            String eventId = EventEditActivity.getCurrentEventId(requireContext());
+            if (eventId == null || eventId.isEmpty()) {
+                Toast.makeText(requireContext(), "No event selected", Toast.LENGTH_SHORT).show();
+                return;
+            }
+            Intent intent = new Intent(requireContext(), EventDetailsActivity.class);
+            intent.putExtra(EventDetailsActivity.EXTRA_EVENT_ID, eventId);
+            intent.putExtra(EventDetailsActivity.EXTRA_VIEW_AS_ENTRANT, false);
+            startActivity(intent);
+        });
+
+        Button buttonManageCoOrganizers = view.findViewById(R.id.buttonManageCoOrganizers);
         Button buttonQR = view.findViewById(R.id.buttonQR);
         Button buttonInviteEntrants = view.findViewById(R.id.buttonInviteEntrants);
+
+        // Manage Co-Organizers — only shown to the primary organizer
+        buttonManageCoOrganizers.setOnClickListener(v -> {
+            String eventId = EventEditActivity.getCurrentEventId(requireContext());
+            if (eventId == null || eventId.isEmpty()) {
+                Toast.makeText(requireContext(), "No event selected", Toast.LENGTH_SHORT).show();
+                return;
+            }
+            startActivity(CoOrganizerManagementActivity.newIntent(requireContext(), eventId));
+        });
 
         // View QR Code (US 02.01.01) — hidden for private events
         buttonQR.setOnClickListener(v -> {
@@ -62,10 +88,10 @@ public class OrganizerNavigationFragment extends Fragment {
             startActivity(OrganizerInviteEntrantActivity.newIntent(requireContext(), eventId));
         });
 
-        // Load event to show/hide QR vs Invite button based on isPrivate
-        String eventId2 = EventEditActivity.getCurrentEventId(requireContext());
-        if (eventId2 != null && !eventId2.isEmpty()) {
-            FirebaseFirestore.getInstance().collection("events").document(eventId2).get()
+        // Load event to show/hide QR vs Invite button, and show Manage Co-Organizers for primary organizer only
+        String eventId = EventEditActivity.getCurrentEventId(requireContext());
+        if (eventId != null && !eventId.isEmpty()) {
+            FirebaseFirestore.getInstance().collection("events").document(eventId).get()
                     .addOnSuccessListener(doc -> {
                         if (doc == null || !doc.exists()) return;
                         Event event = doc.toObject(Event.class);
@@ -77,12 +103,17 @@ public class OrganizerNavigationFragment extends Fragment {
                             buttonQR.setVisibility(View.VISIBLE);
                             buttonInviteEntrants.setVisibility(View.GONE);
                         }
+                        // Show Manage Co-Organizers only to the primary organizer
+                        if (deviceId.equals(event.getOrganizerId())) {
+                            buttonManageCoOrganizers.setVisibility(View.VISIBLE);
+                        } else {
+                            buttonManageCoOrganizers.setVisibility(View.GONE);
+                        }
                     });
         }
 
         // View Geolocation — event venue from Update Event Information (Firestore)
         view.findViewById(R.id.buttonGeo).setOnClickListener(v -> {
-            String eventId = EventEditActivity.getCurrentEventId(requireContext());
             if (eventId == null || eventId.isEmpty()) {
                 Toast.makeText(requireContext(), "Create an event first", Toast.LENGTH_SHORT).show();
                 return;
@@ -108,6 +139,10 @@ public class OrganizerNavigationFragment extends Fragment {
         view.findViewById(R.id.buttonFinal).setOnClickListener(v ->
                 NavHostFragment.findNavController(OrganizerNavigationFragment.this)
                         .navigate(R.id.OrganizerNavigationFragment_to_Final_list)
+        );
+        view.findViewById(R.id.buttonCancelled).setOnClickListener(v ->
+                NavHostFragment.findNavController(OrganizerNavigationFragment.this)
+                        .navigate(R.id.OrganizerNavigationFragment_to_Cancelled_list)
         );
     }
 }

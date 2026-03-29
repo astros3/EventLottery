@@ -7,6 +7,7 @@ import android.graphics.drawable.Drawable;
 import android.location.Address;
 import android.location.Geocoder;
 import android.os.Bundle;
+import android.os.CountDownTimer;
 import android.util.Log;
 import android.view.View;
 import android.widget.ArrayAdapter;
@@ -32,6 +33,7 @@ import com.google.android.gms.location.Priority;
 import com.google.android.material.button.MaterialButton;
 import com.google.firebase.firestore.DocumentSnapshot;
 import com.google.firebase.firestore.FirebaseFirestore;
+import com.google.firebase.Timestamp;
 
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
@@ -56,6 +58,8 @@ public class EventDetailsActivity extends AppCompatActivity {
 
     private static final String TAG = "EventDetails";
     private static final int REQUEST_LOCATION_FOR_JOIN = 1001;
+    /** Accept/decline window after invitation (lottery SELECTED or private INVITED). */
+    private static final long INVITATION_RESPONSE_WINDOW_MS = 24L * 60 * 60 * 1000;
 
     private FirebaseFirestore db;
     private FusedLocationProviderClient fusedLocationClient;
@@ -78,7 +82,14 @@ public class EventDetailsActivity extends AppCompatActivity {
     private MaterialButton acceptInvitationButton;
     private MaterialButton declineInvitationButton;
     private MaterialButton inviteEntrantsButton;
+    private TextView invitationCountdownView;
+    private TextView coOrganizerBanner;
+    private CountDownTimer invitationCountDownTimer;
+    /** End of 24h window for current invitation; 0 if none. */
+    private long invitationResponseDeadlineMillis;
     private boolean organizermode = false;
+    /** True when the current user is a co-organizer for this event. */
+    private boolean isCoOrganizer = false;
     private final ArrayList<String> comments = new ArrayList<>();
     private final ArrayList<String> commentIds = new ArrayList<>();
     private ArrayAdapter<String> commentsAdapter;
@@ -153,6 +164,7 @@ public class EventDetailsActivity extends AppCompatActivity {
         commentsListView.setAdapter(commentsAdapter);
 
         invitationButtonsContainer = findViewById(R.id.invitation_buttons_container);
+        invitationCountdownView    = findViewById(R.id.text_invitation_countdown);
         acceptInvitationButton     = findViewById(R.id.btn_accept_invitation);
         declineInvitationButton    = findViewById(R.id.btn_decline_invitation);
         acceptInvitationButton.setOnClickListener(v ->
@@ -161,6 +173,7 @@ public class EventDetailsActivity extends AppCompatActivity {
                 updateInvitationStatus(WaitingListEntry.Status.DECLINED));
 
         inviteEntrantsButton = findViewById(R.id.btn_invite_entrants);
+        coOrganizerBanner = findViewById(R.id.banner_co_organizer);
 
         commentsListView.setOnItemClickListener((parent, view, position, id) -> {
             if (organizermode) {
@@ -203,6 +216,8 @@ public class EventDetailsActivity extends AppCompatActivity {
         if (event != null) {
             event.setEventId(eventDoc.getId());
             loadedEventIsPrivate = event.isPrivate();
+            // Determine co-organizer status for this device
+            isCoOrganizer = event.isCoOrganizer(deviceId);
             bindEvent(event);
         }
 
@@ -210,22 +225,142 @@ public class EventDetailsActivity extends AppCompatActivity {
                 .collection("waitingList")
                 .document(deviceId)
                 .get()
-                .addOnSuccessListener(doc -> {
-                    onWaitingList = doc != null && doc.exists();
-                    if (onWaitingList) {
-                        waitingListStatus = doc.getString("status");
-                    } else {
-                        waitingListStatus = null;
-                    }
-                    updateStatusAndButton();
-                });
+                .addOnSuccessListener(this::applyWaitingListDocument);
 
         refreshWaitingListCount();
 
         boolean currentlyViewingAsEntrant =
                 getIntent().getBooleanExtra(EXTRA_VIEW_AS_ENTRANT, true);
-        organizermode = !currentlyViewingAsEntrant;
+        // Co-organizers see the organizer-style view (comments moderation, no join button)
+        organizermode = !currentlyViewingAsEntrant || isCoOrganizer;
         loadComments();
+    }
+
+    @Override
+    protected void onResume() {
+        super.onResume();
+        if (eventId != null && !eventId.isEmpty()) {
+            db.collection("events").document(eventId)
+                    .collection("waitingList")
+                    .document(deviceId)
+                    .get()
+                    .addOnSuccessListener(this::applyWaitingListDocument);
+        }
+    }
+
+    @Override
+    protected void onDestroy() {
+        cancelInvitationCountdown();
+        super.onDestroy();
+    }
+
+    private long invitationStartMillisFromDoc(DocumentSnapshot doc) {
+        if (doc == null || !doc.exists()) return 0L;
+        Long inv = doc.getLong("invitationSentMillis");
+        if (inv != null && inv > 0) return inv;
+        Timestamp ts = doc.getTimestamp("joinTimestamp");
+        return ts != null ? ts.toDate().getTime() : 0L;
+    }
+
+    /**
+     * Applies waiting-list document: 24h expiry for SELECTED/INVITED, then updates UI and countdown.
+     */
+    private void applyWaitingListDocument(DocumentSnapshot doc) {
+        cancelInvitationCountdown();
+        invitationResponseDeadlineMillis = 0;
+
+        if (doc == null || !doc.exists()) {
+            onWaitingList = false;
+            waitingListStatus = null;
+            updateStatusAndButton();
+            return;
+        }
+
+        onWaitingList = true;
+        final String status = doc.getString("status");
+        long startMs = invitationStartMillisFromDoc(doc);
+        final boolean inviteActive = WaitingListEntry.Status.SELECTED.name().equals(status)
+                || WaitingListEntry.Status.INVITED.name().equals(status);
+
+        if (inviteActive && startMs > 0) {
+            final long deadline = startMs + INVITATION_RESPONSE_WINDOW_MS;
+            if (System.currentTimeMillis() >= deadline) {
+                db.collection("events").document(eventId)
+                        .collection("waitingList").document(deviceId)
+                        .update("status", WaitingListEntry.Status.CANCELLED.name())
+                        .addOnSuccessListener(unused -> {
+                            waitingListStatus = WaitingListEntry.Status.CANCELLED.name();
+                            updateStatusAndButton();
+                            refreshWaitingListCount();
+                        })
+                        .addOnFailureListener(e -> {
+                            waitingListStatus = status;
+                            invitationResponseDeadlineMillis = deadline;
+                            updateStatusAndButton();
+                            Toast.makeText(this, R.string.invitation_expiry_update_failed, Toast.LENGTH_SHORT).show();
+                        });
+                return;
+            }
+            invitationResponseDeadlineMillis = deadline;
+        }
+
+        waitingListStatus = status;
+        updateStatusAndButton();
+    }
+
+    private void cancelInvitationCountdown() {
+        if (invitationCountDownTimer != null) {
+            invitationCountDownTimer.cancel();
+            invitationCountDownTimer = null;
+        }
+        if (invitationCountdownView != null) {
+            invitationCountdownView.setVisibility(View.GONE);
+        }
+    }
+
+    private void startInvitationCountdown(long deadlineMillis) {
+        if (invitationCountdownView == null) return;
+        long msLeft = deadlineMillis - System.currentTimeMillis();
+        if (msLeft <= 0) {
+            invitationCountdownView.setVisibility(View.GONE);
+            db.collection("events").document(eventId)
+                    .collection("waitingList").document(deviceId)
+                    .get()
+                    .addOnSuccessListener(this::applyWaitingListDocument);
+            return;
+        }
+        invitationCountdownView.setVisibility(View.VISIBLE);
+        if (invitationCountDownTimer != null) {
+            invitationCountDownTimer.cancel();
+        }
+        invitationCountDownTimer = new CountDownTimer(msLeft, 1000) {
+            @Override
+            public void onTick(long millisUntilFinished) {
+                long totalSec = millisUntilFinished / 1000;
+                long h = totalSec / 3600;
+                long m = (totalSec % 3600) / 60;
+                long s = totalSec % 60;
+                invitationCountdownView.setText(
+                        getString(R.string.invitation_countdown_format, h, m, s));
+            }
+
+            @Override
+            public void onFinish() {
+                db.collection("events").document(eventId)
+                        .collection("waitingList").document(deviceId)
+                        .get()
+                        .addOnSuccessListener(EventDetailsActivity.this::applyWaitingListDocument);
+            }
+        };
+        invitationCountDownTimer.start();
+    }
+
+    private void maybeStartInvitationCountdown() {
+        if (invitationButtonsContainer != null
+                && invitationButtonsContainer.getVisibility() == View.VISIBLE
+                && invitationResponseDeadlineMillis > System.currentTimeMillis()) {
+            startInvitationCountdown(invitationResponseDeadlineMillis);
+        }
     }
 
     private void refreshWaitingListCount() {
@@ -233,7 +368,14 @@ public class EventDetailsActivity extends AppCompatActivity {
                 .collection("waitingList")
                 .get()
                 .addOnSuccessListener(querySnapshot -> {
-                    int count = querySnapshot.size();
+                    int count = 0;
+                    for (DocumentSnapshot doc : querySnapshot.getDocuments()) {
+                        WaitingListEntry entry = doc.toObject(WaitingListEntry.class);
+                        if (entry != null
+                                && WaitingListEntry.Status.PENDING.name().equals(entry.getStatus())) {
+                            count++;
+                        }
+                    }
                     waitingListCountView.setText("Waiting List: " + count);
                 });
     }
@@ -272,10 +414,11 @@ public class EventDetailsActivity extends AppCompatActivity {
             posterView.setImageDrawable(null);
         }
 
-        // Show "Invite Entrants" only for the organizer viewing their own private event (US 02.01.03)
-        boolean viewAsEntrant = getIntent().getBooleanExtra(EXTRA_VIEW_AS_ENTRANT, true);
-        if (!viewAsEntrant && event.isPrivate()
-                && DeviceIdManager.getDeviceId(this).equals(event.getOrganizerId())) {
+        // Show "Invite Entrants" for the primary organizer OR co-organizer on private events (US 02.01.03)
+        String currentDeviceId = DeviceIdManager.getDeviceId(this);
+        boolean isOrganizerOrCoOrg = currentDeviceId.equals(event.getOrganizerId())
+                || event.isCoOrganizer(currentDeviceId);
+        if (event.isPrivate() && isOrganizerOrCoOrg) {
             inviteEntrantsButton.setVisibility(View.VISIBLE);
             inviteEntrantsButton.setOnClickListener(v ->
                     startActivity(OrganizerInviteEntrantActivity.newIntent(this, eventId)));
@@ -290,6 +433,24 @@ public class EventDetailsActivity extends AppCompatActivity {
     }
 
     private void updateStatusAndButton() {
+        if (isCoOrganizer) {
+            // Co-organizers see a banner and cannot interact with the waiting list
+            if (coOrganizerBanner != null) coOrganizerBanner.setVisibility(View.VISIBLE);
+            joinLeaveButton.setVisibility(View.GONE);
+            if (invitationButtonsContainer != null)
+                invitationButtonsContainer.setVisibility(View.GONE);
+            statusView.setVisibility(View.GONE);
+            return;
+        }
+        if (coOrganizerBanner != null) coOrganizerBanner.setVisibility(View.GONE);
+        if (organizermode) {
+            joinLeaveButton.setVisibility(View.GONE);
+            if (invitationButtonsContainer != null)
+                invitationButtonsContainer.setVisibility(View.GONE);
+            statusView.setVisibility(View.GONE);
+            return;
+        }
+        cancelInvitationCountdown();
         if (!onWaitingList) {
             if (loadedEventIsPrivate) {
                 // Entrant has no waiting list entry on a private event — invitation only (US 01.05.06)
@@ -376,6 +537,7 @@ public class EventDetailsActivity extends AppCompatActivity {
                 joinLeaveButton.setText(R.string.leave_waiting_list);
                 break;
         }
+        maybeStartInvitationCountdown();
     }
 
     /**
@@ -448,6 +610,8 @@ public class EventDetailsActivity extends AppCompatActivity {
                                     message = "Invitation declined.";
                                 }
                                 Toast.makeText(this, message, Toast.LENGTH_SHORT).show();
+                                cancelInvitationCountdown();
+                                invitationResponseDeadlineMillis = 0;
                                 waitingListStatus = statusToSave;
                                 updateStatusAndButton();
                                 refreshWaitingListCount();
@@ -658,6 +822,7 @@ public class EventDetailsActivity extends AppCompatActivity {
                         Toast.makeText(this, "Failed to leave", Toast.LENGTH_SHORT).show());
     }
 
+    //fetches and shows comments
     private void loadComments() {
         if (eventId == null || eventId.isEmpty()) return;
 
@@ -666,8 +831,11 @@ public class EventDetailsActivity extends AppCompatActivity {
                 .collection("comments")
                 .get()
                 .addOnSuccessListener(querySnapshot -> {
+                    //ArrayList<String> comments = new ArrayList<>();
+
                     comments.clear();
                     commentIds.clear();
+
                     for (DocumentSnapshot doc : querySnapshot.getDocuments()) {
                         String text = doc.getString("text");
                         if (text != null) {
@@ -676,6 +844,11 @@ public class EventDetailsActivity extends AppCompatActivity {
                         }
                     }
                     commentsAdapter.notifyDataSetChanged();
+                    //ArrayAdapter<String> adapter =
+                            //new ArrayAdapter<>(this, android.R.layout.simple_list_item_1, comments);
+
+
+                    //commentsListView.setAdapter(adapter);
                 })
                 .addOnFailureListener(e ->
                         Toast.makeText(this, "Failed to load comments",
@@ -721,5 +894,13 @@ public class EventDetailsActivity extends AppCompatActivity {
                 .addOnFailureListener(e ->
                         Toast.makeText(this, "Failed to delete comment",
                                 Toast.LENGTH_SHORT).show());
+    }
+
+    public boolean isLoadedEventIsPrivate() {
+        return loadedEventIsPrivate;
+    }
+
+    public void setLoadedEventIsPrivate(boolean loadedEventIsPrivate) {
+        this.loadedEventIsPrivate = loadedEventIsPrivate;
     }
 }
