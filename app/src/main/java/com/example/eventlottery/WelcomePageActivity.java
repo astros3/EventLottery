@@ -21,6 +21,7 @@ import androidx.core.content.ContextCompat;
 
 import com.google.firebase.firestore.FirebaseFirestore;
 import com.google.firebase.messaging.FirebaseMessaging;
+import com.google.firebase.firestore.SetOptions;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -53,11 +54,20 @@ public class WelcomePageActivity extends AppCompatActivity {
         // Admin button visible only to users who have an entry in Firestore "admins" collection
         String deviceId = DeviceIdManager.getDeviceId(this);
         FirebaseFirestore db = FirebaseFirestore.getInstance();
+        // Initial Admin Check & Auto-Enrollment (US 03.09.01)
         db.collection("admins").document(deviceId).get()
                 .addOnSuccessListener(documentSnapshot -> {
-                    adminbutton.setVisibility(documentSnapshot.exists() ? View.VISIBLE : View.GONE);
-                })
-                .addOnFailureListener(e -> adminbutton.setVisibility(View.GONE));
+                    if (documentSnapshot.exists()) {
+                        adminbutton.setVisibility(View.VISIBLE);
+
+                        // Admin found! Mirror their ID to other collections so they gain full access
+                        String adminName = documentSnapshot.getString("name");
+                        if (adminName == null) adminName = "Admin User";
+                        enrollAdminInAllRoles(db, deviceId, adminName);
+                    } else {
+                        adminbutton.setVisibility(View.GONE);
+                    }
+                });
 
         // Entrant/User
         userbutton.setOnClickListener(v -> {
@@ -128,7 +138,7 @@ public class WelcomePageActivity extends AppCompatActivity {
             adminDb.collection("admins").document(adminDeviceId).get()
                     .addOnSuccessListener(documentSnapshot -> {
                         if (documentSnapshot.exists()) {
-                            startActivity(new Intent(WelcomePageActivity.this, AdminEventControlScreenActivity.class));
+                            startActivity(new Intent(WelcomePageActivity.this, AdminMainScreenActivity.class));
                             finish();
                         } else {
                             Toast.makeText(this, "Access denied. You must be an admin to access this.", Toast.LENGTH_LONG).show();
@@ -159,5 +169,24 @@ public class WelcomePageActivity extends AppCompatActivity {
             db.collection("users").document(deviceId).update(update);
             db.collection("organizers").document(deviceId).update(update);
         });
+    }
+  
+    /**
+     * US 03.09.01: Ensures Admin ID is present in all role collections.
+     * Uses merge() so we don't overwrite existing user/organizer data.
+     */
+    private void enrollAdminInAllRoles(FirebaseFirestore db, String deviceId, String name) {
+        Map<String, Object> data = new HashMap<>();
+        data.put("name", name);
+
+        // Ensure "role" field matches what your buttons expect
+        Map<String, Object> userData = new HashMap<>(data);
+        userData.put("role", "entrant");
+
+        Map<String, Object> orgData = new HashMap<>(data);
+        orgData.put("role", "organizer");
+
+        db.collection("users").document(deviceId).set(userData, SetOptions.merge());
+        db.collection("organizers").document(deviceId).set(orgData, SetOptions.merge());
     }
 }
