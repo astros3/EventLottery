@@ -30,10 +30,8 @@ public class NotificationHelper {
      */
     public static final String TYPE_LOTTERY_LOST = "LOTTERY_LOST";
 
-    /**
-     * Notification type for private event invite notifications (US 01.05.06).
-     */
-    public static final String TYPE_PRIVATE_INVITE = "PRIVATE_INVITE";
+
+
 
     /**
      * Notification type when a user is assigned as a co-organizer for an event.
