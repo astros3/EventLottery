@@ -9,7 +9,6 @@ package com.example.eventlottery;
 //US 03.02.01
 //US 03.07.01
 public class AdminProfileItemTemporary {
-    //declearation
     private String id; //for organizer it will be storing the organizer id, for entrant it will be storing the device id
     private String name;
     private String isitorganzierorentrantinput;
